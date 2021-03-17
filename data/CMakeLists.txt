@@ -1,0 +1,13 @@
+function(dbusxml2c _interface _output _mode _prefix)
+  add_custom_target(${_output}
+    COMMAND
+    dbus-binding-tool --mode=${_mode} --prefix=${_prefix}
+    --output=${CMAKE_BINARY_DIR}/src/${_output} ${_interface}
+    DEPENDS ${INTERFACE})
+endfunction()
+
+dbusxml2c(${CMAKE_CURRENT_SOURCE_DIR}/com.kylinsec.Kiran.SystemDaemon.Biometrics.xml kiran-biometrics-stub.h glib-server SystemDaemon)
+dbusxml2c(${CMAKE_CURRENT_SOURCE_DIR}/com.kylinsec.Kiran.SystemDaemon.Biometrics.xml kiran-biometrics-proxy.h glib-client SystemDaemon)
+
+install(FILES kiran_biometrics.conf DESTINATION /etc/dbus-1/system.d)
+install(FILES com.kylinsec.Kiran.SystemDaemon.Biometrics.service DESTINATION /usr/share/dbus-1/system-services)

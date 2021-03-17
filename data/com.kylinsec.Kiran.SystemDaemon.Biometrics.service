@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.kylinsec.Kiran.SystemDaemon.Biometrics
+Exec=/usr/libexec/kiran_biometrics_manager
+User=root
