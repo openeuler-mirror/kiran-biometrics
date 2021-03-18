@@ -1,6 +1,13 @@
 #ifndef __KIRAN_PAM_H__
 #define __KIRAN_PAM_H__
 
+#define FINGER_MODE 	"KiranFingerAuthMode"
+#define FACE_MODE   	"KiranFaceAuthMode"
+#define PASSWD_MODE 	"KiranPasswordAuthMode"
+
+#define NEED_DATA       "KiranNeedAuth"
+#define NOT_NEED_DATA   "KiranNotNeedAuth"
+
 #include <security/pam_modules.h>
 #include <glib.h>
 
@@ -10,7 +17,6 @@
     send_debug_msg (pamh, s);               \
     g_free (s);                             \
 }
-
 
 char * request_respone(pam_handle_t *pamh, 
 		       int echocode, 

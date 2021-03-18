@@ -266,7 +266,7 @@ do_finger_enroll (gpointer data)
     int i;
     int try_count = 0;
     int progress = 0;
-    unsigned int timeout = 30000;
+    unsigned int timeout = 5000;
     unsigned char *templates[3];
     unsigned int templateLens[3];
     unsigned char *regTemplate = NULL;
@@ -388,6 +388,8 @@ do_finger_enroll (gpointer data)
     kiran_fprint_manager_close (priv->kfpmanager);
     priv->fprint_busy = FALSE;
     priv->fp_action = FP_ACTION_NONE;
+
+    g_thread_exit (0);
 }
 
 static void
@@ -398,7 +400,7 @@ kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics,
     g_autoptr(GError) error = NULL;
     int ret;
 
-    if (priv->fprint_busy)
+    if (priv->fprint_busy || priv->fprint_enroll_thread)
     {
 	g_set_error (&error, FPRINT_ERROR, 
 		     FPRINT_ERROR_DEVICE_BUSY, "Fingerprint Device Busy");
@@ -434,9 +436,8 @@ kiran_biometrics_enroll_fprint_stop (KiranBiometrics *kirBiometrics,
 {
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     g_autoptr(GError) error = NULL;
-    int ret;
 
-    if (priv->fp_action != FP_ACTION_ENROLL)
+    if (priv->fp_action != FP_ACTION_ENROLL || !priv->fprint_enroll_thread)
     {
 	g_set_error (&error, FPRINT_ERROR, 
 		     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "No Action In Progress");
@@ -444,19 +445,15 @@ kiran_biometrics_enroll_fprint_stop (KiranBiometrics *kirBiometrics,
 	return;
     }
 
-    g_thread_exit (priv->fprint_enroll_thread);
+    priv->fp_action = FP_ACTION_NONE;
     g_thread_join (priv->fprint_enroll_thread);
     priv->fprint_enroll_thread = NULL;
-    ret = kiran_fprint_manager_close (priv->kfpmanager);
-    if(ret != 0)
-    {
-	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_INTERNAL, "Internal Error");
-	dbus_g_method_return_error (context, error);
-    }
-
     priv->fprint_busy = FALSE;
-    priv->fp_action = FP_ACTION_NONE;
+
+    g_signal_emit(kirBiometrics,
+                  signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
+                  "Cancel fprint enroll!", "", 0,
+                  TRUE);
 
     dbus_g_method_return(context);
 }
@@ -498,6 +495,9 @@ do_finger_verify (gpointer data)
             g_free (template);
     	    template = NULL;
         }
+        g_signal_emit(kirBiometrics, 
+                      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
+                      "Please place the finger!", FALSE);
         ret = kiran_fprint_manager_acquire_finger_print (priv->kfpmanager,
                                                          &template,
                                                          &templateLen,
@@ -538,6 +538,8 @@ do_finger_verify (gpointer data)
     kiran_fprint_manager_close (priv->kfpmanager);
     priv->fprint_busy = FALSE;
     priv->fp_action = FP_ACTION_NONE;
+
+    g_thread_exit (0);
 }
 
 static void 
@@ -549,7 +551,7 @@ kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics,
     g_autoptr(GError) error = NULL;
     int ret;
 
-    if (priv->fprint_busy)
+    if (priv->fprint_busy || priv->fprint_verify_thread)
     {
         g_set_error (&error, FPRINT_ERROR, 
                          FPRINT_ERROR_DEVICE_BUSY, "Fingerprint Device Busy");
@@ -588,9 +590,8 @@ kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics,
 {
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     g_autoptr(GError) error = NULL;
-    int ret;
 
-    if (priv->fp_action != FP_ACTION_VERIFY)
+    if (priv->fp_action != FP_ACTION_VERIFY || !priv->fprint_verify_thread)
     {
         g_set_error (&error, FPRINT_ERROR, 
                      FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "No Action In Progress");
@@ -598,21 +599,15 @@ kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics,
         return;
     }
 
-    g_thread_exit (priv->fprint_verify_thread);
-    g_thread_join (priv->fprint_verify_thread);
-    priv->fprint_verify_thread = NULL;
-    ret = kiran_fprint_manager_close (priv->kfpmanager);
-    g_message ("kiran_fprint_manager_template_match stop is %d\n", ret);
-    if(ret != 0)
-    {
-        g_set_error (&error, FPRINT_ERROR,
-                     FPRINT_ERROR_INTERNAL, "Internal Error");
-	dbus_g_method_return_error (context, error);
-    }
-
-    priv->fprint_busy = FALSE;
     priv->fp_action = FP_ACTION_NONE;
 
+    g_thread_join (priv->fprint_verify_thread);
+    priv->fprint_verify_thread = NULL;
+    priv->fprint_busy = FALSE;
+
+    g_signal_emit(kirBiometrics,
+                      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
+                      "Cancel fprint verify!", TRUE);
     dbus_g_method_return(context);
 }
 

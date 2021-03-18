@@ -14,6 +14,7 @@
 #include "config.h"
 #include "kiran-biometrics-proxy.h"
 #include "kiran-pam.h"
+#include "kiran-pam-msg.h"
 
 typedef struct {
     char *result;
@@ -65,12 +66,11 @@ verify_result(GObject *object, const char *result, gboolean done, gpointer user_
             g_main_loop_quit (data->loop);
             return;
     }
-
-    send_err_msg (data->pamh, result);
+    send_info_msg (data->pamh, result);
 }
 
 static int 
-do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics)
+do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const char *auth)
 {
     verify_data *data;
     GError *error = NULL;
@@ -89,11 +89,13 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics)
 			       G_CALLBACK(verify_result),
                                data, NULL);
     ret = PAM_AUTH_ERR;
-    if(!com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_start (biometrics, "8692ae8ff1e6d7793fad8d1396f2a8c6", &error))
+    D(data->pamh, "Verify id: %s\n", auth);
+    if(!com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_start (biometrics, auth, &error))
     {
         if (dbus_g_error_has_name(error, "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error.NoEnrolledPrints"))
             ret = PAM_USER_UNKNOWN;
         D(pamh, "VerifyFprintStart failed: %s", error->message);
+	send_info_msg (pamh,  error->message);
         g_error_free (error);
 
         g_free (data->result);
@@ -106,17 +108,21 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics)
     com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_stop(biometrics, NULL);
     dbus_g_proxy_disconnect_signal(biometrics, "VerifyFprintStatus", G_CALLBACK(verify_result), data);
 
-    if (g_str_equal (data->result, "Fingerprint not match!")) {
+    if (g_str_equal (data->result, "Fingerprint not match!")) 
+    {
         send_err_msg (data->pamh, data->result);
         ret = PAM_AUTH_ERR;
-    } else if (g_str_equal (data->result, "Fingerprint match!"))
+    } 
+    else if (g_str_equal (data->result, "Fingerprint match!"))
+    {
         ret = PAM_SUCCESS;
-    else if (g_str_equal (data->result, "Open fingerprint device fail!"))
+    }
+    else if (g_str_equal (data->result, "verify-disconnected")) 
+    {
         ret = PAM_AUTHINFO_UNAVAIL;
-    else if (g_str_equal (data->result, "verify-disconnected")) {
-        ret = PAM_AUTHINFO_UNAVAIL;
-    } else {
-        send_info_msg (data->pamh, "An unknown error occurred");
+    } else 
+    {
+        send_err_msg (data->pamh, data->result);
         ret = PAM_AUTH_ERR;
     }
 
@@ -147,12 +153,13 @@ unref_loop (GMainLoop *loop)
 }
 
 static int 
-do_auth(pam_handle_t *pamh, const char *username)
+do_auth(pam_handle_t *pamh, const char *username, const char *auth)
 {
     DBusGConnection *connection;
     DBusGProxy *biometrics;
     DBusConnection *conn;
     GMainLoop *loop;
+    char *rep;
     int ret;
 
     connection = get_dbus_connection (pamh, &loop);
@@ -168,9 +175,21 @@ do_auth(pam_handle_t *pamh, const char *username)
          D(pamh, "Error with connect the service: %s", SERVICE_NAME);
          return PAM_AUTHINFO_UNAVAIL;
     }
-   
-    ret = do_verify (loop, pamh, biometrics);
 
+    //请求指纹人认证界面
+    rep = request_respone(pamh,
+                          PAM_PROMPT_ECHO_ON,
+                          ASK_FPINT);
+    if (rep && g_strcmp0(rep, REP_FPINT) == 0)
+    {
+	//认证界面准备完毕	
+        ret = do_verify (loop, pamh, biometrics, auth);
+    }
+    else
+    {
+        ret =  PAM_AUTHINFO_UNAVAIL;
+    }
+   
     unref_loop (loop);
     g_object_unref (biometrics);
     close_and_unref (connection);
@@ -185,6 +204,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     const char *username;
     guint i;
     int r;
+    const void *auth;
 
 #if !GLIB_CHECK_VERSION (2, 36, 0)
     g_type_init();
@@ -201,7 +221,16 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     if (r != PAM_SUCCESS)
         return PAM_AUTHINFO_UNAVAIL;
 
-    r = do_auth (pamh, username);
+    r = pam_get_data (pamh, FINGER_MODE, &auth);
+    if (r == PAM_SUCCESS && auth != NULL)
+    {
+        if (g_strcmp0 (auth, NOT_NEED_DATA) == 0)
+        {
+	    return PAM_SUCCESS;
+        }
+    }
+
+    r = do_auth (pamh, username, auth);
 
     return r;
 }
