@@ -202,6 +202,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     guint i;
     int r;
 
+    return PAM_SUCCESS;
+
 #if !GLIB_CHECK_VERSION (2, 36, 0)
     g_type_init();
 #endif
@@ -220,4 +222,37 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     do_authmode_set(pamh, username);
 
     return r;
+}
+
+int pam_sm_setcred(pam_handle_t *pamh, int flags,
+                   int argc, const char **argv)
+{
+    return PAM_SUCCESS;
+}
+
+/* Account Management API's */
+int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
+                     int argc, const char **argv)
+{
+    return PAM_SUCCESS;
+}
+
+/* Session Management API's */
+int pam_sm_open_session(pam_handle_t *pamh, int flags,
+                        int argc, const char **argv)
+{
+    return PAM_SUCCESS;
+}
+
+int pam_sm_close_session(pam_handle_t *pamh, int flags,
+                         int argc, const char **argv)
+{
+    return PAM_SUCCESS;
+}
+
+/* Password Management API's */
+int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
+                     int argc, const char **argv)
+{
+    return PAM_SUCCESS;
 }
