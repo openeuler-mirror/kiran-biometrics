@@ -202,8 +202,6 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     guint i;
     int r;
 
-    return PAM_SUCCESS;
-
 #if !GLIB_CHECK_VERSION (2, 36, 0)
     g_type_init();
 #endif
