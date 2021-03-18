@@ -285,6 +285,11 @@ do_finger_enroll (gpointer data)
             g_free (templates[i]);
     	    templates[i] = NULL;
         }
+        progress = 25 * i;
+        g_signal_emit(kirBiometrics, 
+              	      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
+                      "Please place the finger!", "", progress, 
+              	      FALSE);
     
         ret = kiran_fprint_manager_acquire_finger_print (priv->kfpmanager,
     	                                             &templates[i],
@@ -315,11 +320,6 @@ do_finger_enroll (gpointer data)
                 else
                 {
             	    i++;
-            	    progress = 25 * i;
-            	    g_signal_emit(kirBiometrics, 
-                  		      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-                                      "Please place the finger again!", "", progress, 
-                  		      FALSE);
                 }
             }
             else

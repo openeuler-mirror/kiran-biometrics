@@ -70,6 +70,8 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
     if (rawdate == NULL)
 	return FPRINT_RESULT_FAIL;
 
+    sleep(2); //等待一段时间再采集，避免录入太快
+
     while(1)
     {
 	curTime = GetTickCount();
