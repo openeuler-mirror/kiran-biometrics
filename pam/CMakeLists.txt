@@ -41,3 +41,4 @@ target_link_libraries(pam_kiran_authmode pam_misc ${GLIB2_LIBRARIES} ${GDBUS_LIB
 
 install(TARGETS pam_kiran_fprintd LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/security/)
 install(TARGETS pam_kiran_authmode LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/security/)
+install(FILES kiran-pam-msg.h DESTINATION /usr/include/)

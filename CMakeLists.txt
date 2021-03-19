@@ -18,6 +18,7 @@ set(MODULE_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/kiran-fprint-modu
 set(SERVICE_NAME "com.kylinsec.Kiran.SystemDaemon.Biometrics")
 set(SERVICE_PATH "/com/kylinsec/Kiran/SystemDaemon/Biometrics")
 set(SERVICE_INTERFACE "com.kylinsec.Kiran.SystemDaemon.Biometrics")
+set(INSTALL_BINDIR ${CMAKE_INSTALL_PREFIX}/libexec)
 
 add_subdirectory(src)
 add_subdirectory(data)

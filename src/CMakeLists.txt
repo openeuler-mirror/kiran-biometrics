@@ -14,4 +14,4 @@ include_directories(${GLIB2_INCLUDE_DIRS} ${GDBUS_INCLUDE_DIRS} ${GIO_INCLUDE_DI
 add_executable (kiran_biometrics_manager main.c kiran-biometrics.c kiran-fprint-module.c kiran-fprint-manager.c)
 add_dependencies(kiran_biometrics_manager kiran-biometrics-stub.h)
 target_link_libraries(kiran_biometrics_manager ${GLIB2_LIBRARIES} ${GDBUS_LIBRARIES} ${GIO_LIBRARIES} ${GMODULE_LIBRARIES})
-install(TARGETS kiran_biometrics_manager RUNTIME DESTINATION /usr/libexec)
+install(TARGETS kiran_biometrics_manager RUNTIME DESTINATION ${INSTALL_BINDIR})

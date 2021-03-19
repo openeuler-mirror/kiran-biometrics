@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=com.kylinsec.Kiran.SystemDaemon.Biometrics
+Exec=@INSTALL_BINDIR@/kiran_biometrics_manager
+User=root
+SystemdService=kiran-system-daemon-biometrics.service
