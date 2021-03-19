@@ -10,6 +10,7 @@ find_library(PAM_LIBRARY pam)
 include_directories(${GLIB2_INCLUDE_DIRS} ${GDBUS_INCLUDE_DIRS} ${GIO_UNIX_INCLUDE_DIRS} ${GLIB_JSON_INCLUDE_DIRS})
 include_directories(${CMAKE_BINARY_DIR}/src/)
 include_directories(${CMAKE_BINARY_DIR}/pam/)
+include_directories(${SRC_DIR})
 
 find_program(GDBUS_CODEGEN "gdbus-codegen")
 

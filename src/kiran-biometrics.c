@@ -20,6 +20,10 @@
 #define MAX_FPRINT_TEMPLATE  10240     /* 最大指纹模板长度 */
 
 GQuark fprint_error_quark(void);
+GType fprint_error_get_type(void);
+
+#define FPRINT_TYPE_ERROR fprint_error_get_type()
+#define FPRINT_ERROR_DBUS_INTERFACE "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error"
 
 #define FPRINT_ERROR fprint_error_quark()
 
@@ -94,6 +98,7 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
         		&dbus_glib_SystemDaemon_object_info);
 
     g_type_class_add_private (klass, sizeof (KiranBiometricsPrivate));
+    dbus_g_error_domain_register (FPRINT_ERROR, FPRINT_ERROR_DBUS_INTERFACE, FPRINT_TYPE_ERROR);
 
     signals[SIGNAL_FPRINT_VERIFY_STATUS] = 
 	                g_signal_new ("verify-fprint-status",
@@ -386,10 +391,22 @@ do_finger_enroll (gpointer data)
     }
 
     if (ret != FPRINT_RESULT_OK)
-        g_signal_emit(kirBiometrics, 
-    	      	  signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-    	          _("Failed enroll finger!"), "", progress, 
-    	      	  TRUE);
+    {
+	if (priv->fp_action != FP_ACTION_ENROLL)
+	{
+            g_signal_emit(kirBiometrics, 
+    	      	      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
+    	              _("Failed enroll finger!"), "", progress, 
+    	      	      TRUE);
+	}
+	else
+	{
+            g_signal_emit(kirBiometrics,
+                      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
+                      _("Cancel fprint enroll!"), "", 0,
+                      TRUE);
+	}
+    }
     
     for (i = 0; i < 3; i++)
         g_free(templates[i]);
@@ -465,11 +482,6 @@ kiran_biometrics_enroll_fprint_stop (KiranBiometrics *kirBiometrics,
         priv->fprint_enroll_thread = NULL;
     }
 
-    g_signal_emit(kirBiometrics,
-                  signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-                  _("Cancel fprint enroll!"), "", 0,
-                  TRUE);
-
     dbus_g_method_return(context);
 }
 
@@ -509,9 +521,14 @@ do_finger_verify (gpointer data)
             g_free (template);
     	    template = NULL;
         }
-        g_signal_emit(kirBiometrics, 
+
+	if (i == 0)
+	{
+            g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
                       _("Please place the finger!"), FALSE, FALSE);
+	}
+
         ret = kiran_fprint_manager_acquire_finger_print (priv->kfpmanager,
                                                          &template,
                                                          &templateLen,
@@ -537,16 +554,26 @@ do_finger_verify (gpointer data)
             {
                 g_signal_emit(kirBiometrics, 
                   	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                              _("Fingerprint not match!"), FALSE, TRUE);
+                              _("Fingerprint not match, place again!"), FALSE, TRUE);
             }
         }
     }
 
     if (ret != FPRINT_RESULT_OK)
     {
-        g_signal_emit(kirBiometrics, 
+
+	if (priv->fp_action != FP_ACTION_VERIFY)
+	{
+            g_signal_emit(kirBiometrics,
+                          signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
+                          _("Cancel fprint verify!"), TRUE, FALSE);
+	}
+	else
+	{
+            g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
                       _("Fingerprint over max try count!"), TRUE, FALSE);
+	}
     }
 
     kiran_fprint_manager_close (priv->kfpmanager);
@@ -621,9 +648,6 @@ kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics,
         priv->fprint_verify_thread = NULL;
     }
 
-    g_signal_emit(kirBiometrics,
-                      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                      _("Cancel fprint verify!"), TRUE, FALSE);
     dbus_g_method_return(context);
 }
 
@@ -653,6 +677,28 @@ GQuark fprint_error_quark(void)
     if (!quark)
             quark = g_quark_from_static_string("kiran-fprintd-error-quark");
     return quark;
+}
+
+#define ENUM_ENTRY(NAME, DESC) { NAME, "" #NAME "", DESC }
+GType
+fprint_error_get_type (void)
+{
+    static GType etype = 0;
+ 
+    if (etype == 0) {
+            static const GEnumValue values[] =
+            {
+                    ENUM_ENTRY (FPRINT_ERROR_NOT_FOUND_DEVICE, "NoSuchDevice"),
+                    ENUM_ENTRY (FPRINT_ERROR_DEVICE_BUSY, "DeviceBusy"),
+                    ENUM_ENTRY (FPRINT_ERROR_INTERNAL, "Internal"),
+                    ENUM_ENTRY (FPRINT_ERROR_PERMISSION_DENIED, "PermissionDenied"),
+                    ENUM_ENTRY (FPRINT_ERROR_NO_ENROLLED_PRINTS, "NoEnrolledPrints"),
+                    ENUM_ENTRY (FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "NoActionInProgress"),
+                    { 0, 0, 0 }
+            };
+            etype = g_enum_register_static ("FprintError", values);
+    }
+    return etype;
 }
 
 KiranBiometrics *

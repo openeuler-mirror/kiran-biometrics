@@ -15,12 +15,14 @@
 #include "kiran-biometrics-proxy.h"
 #include "kiran-pam.h"
 #include "kiran-pam-msg.h"
+#include "kiran-biometrics-types.h"
 
 typedef struct {
     char *result;
     gboolean match;
     pam_handle_t *pamh;
     GMainLoop *loop;
+    gboolean should_handle;
 } verify_data;
 
 static DBusGConnection *
@@ -61,6 +63,12 @@ verify_result(GObject *object, const char *result, gboolean done, gboolean match
     verify_data *data = user_data;
     const char *msg;
 
+    if (!data->should_handle)
+    {
+	data->should_handle = TRUE;
+	return;
+    }
+
     D(data->pamh, "Verify result: %s\n", result);
     data->match = match;
     if (done != FALSE) {
@@ -95,6 +103,7 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
     data->loop = loop;
     data->result = NULL;
     data->match = FALSE;
+    data->should_handle = TRUE;
 
     dbus_g_proxy_add_signal(biometrics, 
 		            "VerifyFprintStatus", 
@@ -108,15 +117,25 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
 
     if(!com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_start (biometrics, auth, &error))
     {
-        if (dbus_g_error_has_name(error, "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error.NoEnrolledPrints"))
-            ret = PAM_USER_UNKNOWN;
-        D(pamh, "VerifyFprintStart failed: %s", error->message);
-	send_info_msg (pamh,  error->message);
-        g_error_free (error);
+	if (dbus_g_error_has_name (error, "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error.DeviceBusy"))
+	{
+	    //取消先前的认证
+	    data->should_handle = FALSE;
+    	    com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_stop(biometrics, NULL);
+            g_error_free (error);
+	}
 
-        g_free (data->result);
-	g_free (data);
-	return PAM_AUTH_ERR;
+	error = NULL;
+	if(!com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_start (biometrics, auth, &error))
+	{
+            D(pamh, "VerifyFprintStart failed: %s", error->message);
+    	    send_info_msg (pamh,  error->message);
+            g_error_free (error);
+    
+            g_free (data->result);
+    	    g_free (data);
+    	    return PAM_AUTH_ERR;
+	}
     }
 
     source = g_timeout_source_new_seconds (120);
