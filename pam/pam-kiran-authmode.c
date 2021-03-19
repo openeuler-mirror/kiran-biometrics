@@ -67,6 +67,12 @@ parser_auth_items_json_data (pam_handle_t *pamh, char *data)
 }
 
 static void
+data_cleanup (pam_handle_t *pamh, void *data, int error_status)
+{
+    g_free (data);
+}
+
+static void
 do_authmode_set(pam_handle_t *pamh, const char *username)
 {
     GDBusConnection *connection;
@@ -161,7 +167,7 @@ do_authmode_set(pam_handle_t *pamh, const char *username)
 	    id = parser_auth_items_json_data (pamh, auth_items);
 	    if (id)
 	    {
-	        auth = g_strdup (id);
+	        auth = id;
             D(pamh, "Error with getting the finger auth id: %s", id);
 	    }
 	    else
@@ -172,14 +178,14 @@ do_authmode_set(pam_handle_t *pamh, const char *username)
     }
     else
 	auth = g_strdup (NOT_NEED_DATA);
-    pam_set_data (pamh, FINGER_MODE, auth, NULL);
+    pam_set_data (pamh, FINGER_MODE, auth, data_cleanup);
 
     //密码认证
     if (authmode & ACCOUNTS_AUTH_MODE_PASSWORD)
 	auth = g_strdup (NEED_DATA);
     else
 	auth = g_strdup (NOT_NEED_DATA);
-    pam_set_data (pamh, PASSWD_MODE, auth, NULL);
+    pam_set_data (pamh, PASSWD_MODE, auth, data_cleanup);
 
 
     //人脸认证
@@ -187,7 +193,7 @@ do_authmode_set(pam_handle_t *pamh, const char *username)
 	auth = g_strdup (NEED_DATA);
     else
 	auth = g_strdup (NOT_NEED_DATA);
-    pam_set_data (pamh, FACE_MODE, auth, NULL);
+    pam_set_data (pamh, FACE_MODE, auth, data_cleanup);
 
     g_object_unref (user);
     g_object_unref (accounts);
