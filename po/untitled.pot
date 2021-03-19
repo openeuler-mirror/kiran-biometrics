@@ -1,0 +1,82 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-19 14:04+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../src/kiran-biometrics.c:293 ../src/kiran-biometrics.c:513
+msgid "Please place the finger!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:300
+msgid "Please place the finger again!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:326
+msgid "Please place the same finger!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:379
+msgid "Successed enroll finger!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:389
+msgid "Failed enroll finger!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:416 ../src/kiran-biometrics.c:570
+#, c-format
+msgid "Fingerprint Device Busy"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:435 ../src/kiran-biometrics.c:592
+#, c-format
+msgid "Fingerprint Device Not Found"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:453 ../src/kiran-biometrics.c:610
+#, c-format
+msgid "No Action In Progress"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:468
+msgid "Cancel fprint enroll!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:494
+msgid "Not Found The Id Fprint Template!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:531
+msgid "Fingerprint match!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:539
+msgid "Fingerprint not match!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:548
+msgid "Fingerprint over max try count!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:625
+msgid "Cancel fprint verify!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:642
+#, c-format
+msgid "Internal Error"
+msgstr ""

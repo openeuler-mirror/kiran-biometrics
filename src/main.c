@@ -1,12 +1,12 @@
-#include <stdlib.h>
+#include "config.h"
 
+#include <stdlib.h>
 #include <dbus/dbus-glib-bindings.h>
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <glib-object.h>
 #include <gmodule.h>
-
-#include "config.h"
+#include <locale.h>
 #include "kiran-biometrics.h"
 
 
@@ -18,6 +18,11 @@ int main (int argc, char **argv)
     DBusGConnection *kiran_biometrics_dbus_conn;
     DBusGProxy *driver_proxy;
     guint request_name_ret;
+
+    setlocale(LC_ALL, "");
+    bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+    textdomain (GETTEXT_PACKAGE);
 
 #if !GLIB_CHECK_VERSION (2, 36, 0)
     g_type_init();

@@ -16,6 +16,9 @@
 #define MAX_TRY_COUNT 20               /* 最大尝试次数 */
 #endif
 
+#define DEFAULT_TIME_OUT 5000          /* 一次等待指纹时间，单位毫秒*/
+#define MAX_FPRINT_TEMPLATE  10240     /* 最大指纹模板长度 */
+
 GQuark fprint_error_quark(void);
 
 #define FPRINT_ERROR fprint_error_quark()
@@ -98,7 +101,7 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 		    	               G_SIGNAL_RUN_LAST, 
 				       0, 
 				       NULL, NULL, NULL, 
-				       G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+				       G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN);
 
     signals[SIGNAL_FPRINT_ENROLL_STATUS] = 
 	    		g_signal_new ("enroll-fprint-status",
@@ -266,7 +269,6 @@ do_finger_enroll (gpointer data)
     int i;
     int try_count = 0;
     int progress = 0;
-    unsigned int timeout = 5000;
     unsigned char *templates[3];
     unsigned int templateLens[3];
     unsigned char *regTemplate = NULL;
@@ -286,15 +288,25 @@ do_finger_enroll (gpointer data)
     	    templates[i] = NULL;
         }
         progress = 25 * i;
-        g_signal_emit(kirBiometrics, 
-              	      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-                      "Please place the finger!", "", progress, 
-              	      FALSE);
+	if (i == 0)
+	{
+            g_signal_emit(kirBiometrics, 
+              	          signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
+                          _("Please place the finger!"), "", progress, 
+              	          FALSE);
+	}
+	else
+	{
+            g_signal_emit(kirBiometrics, 
+              	         signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
+                         _("Please place the finger again!"), "", progress, 
+              	         FALSE);
+	}
     
         ret = kiran_fprint_manager_acquire_finger_print (priv->kfpmanager,
-    	                                             &templates[i],
+    	                                                 &templates[i],
                                                          &length,
-    					             timeout);
+    					                 DEFAULT_TIME_OUT);
         g_message ("kiran_fprint_manager_acquire_finger_print ret is %d, len %d\n", ret, length);
         templateLens[i] = length;
         if (ret == FPRINT_RESULT_OK)
@@ -313,7 +325,7 @@ do_finger_enroll (gpointer data)
                 {
             	    g_signal_emit(kirBiometrics, 
                   		      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-                                      "Please place the same finger!", "", progress, 
+                                      _("Please place the same finger!"), "", progress, 
                   		      FALSE);
                     i = 0;
                 }
@@ -366,7 +378,7 @@ do_finger_enroll (gpointer data)
             {
                 g_signal_emit(kirBiometrics, 
                       	  signals[SIGNAL_FPRINT_ENROLL_STATUS],  0,
-                              "Successed enroll finger!", id, 100, 
+                              _("Successed enroll finger!"), id, 100, 
                               TRUE);
             }
     	    g_free(id);
@@ -376,7 +388,7 @@ do_finger_enroll (gpointer data)
     if (ret != FPRINT_RESULT_OK)
         g_signal_emit(kirBiometrics, 
     	      	  signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-    	          "Failed enroll finger!!", "", progress, 
+    	          _("Failed enroll finger!"), "", progress, 
     	      	  TRUE);
     
     for (i = 0; i < 3; i++)
@@ -400,10 +412,10 @@ kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics,
     g_autoptr(GError) error = NULL;
     int ret;
 
-    if (priv->fprint_busy || priv->fprint_enroll_thread)
+    if (priv->fprint_busy)
     {
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_DEVICE_BUSY, "Fingerprint Device Busy");
+		     FPRINT_ERROR_DEVICE_BUSY, _("Fingerprint Device Busy"));
 	dbus_g_method_return_error (context, error);
 	return;
     }
@@ -422,7 +434,7 @@ kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics,
     else
     {
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_NOT_FOUND_DEVICE, "Fingerprint Device Not Found");
+		     FPRINT_ERROR_NOT_FOUND_DEVICE, _("Fingerprint Device Not Found"));
 	dbus_g_method_return_error (context, error);
 	return;
     }
@@ -437,22 +449,25 @@ kiran_biometrics_enroll_fprint_stop (KiranBiometrics *kirBiometrics,
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     g_autoptr(GError) error = NULL;
 
-    if (priv->fp_action != FP_ACTION_ENROLL || !priv->fprint_enroll_thread)
+    if (priv->fp_action != FP_ACTION_ENROLL)
     {
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "No Action In Progress");
+		     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, _("No Action In Progress"));
 	dbus_g_method_return_error (context, error);
 	return;
     }
 
     priv->fp_action = FP_ACTION_NONE;
-    g_thread_join (priv->fprint_enroll_thread);
-    priv->fprint_enroll_thread = NULL;
-    priv->fprint_busy = FALSE;
+
+    if (priv->fprint_enroll_thread)
+    {
+        g_thread_join (priv->fprint_enroll_thread);
+        priv->fprint_enroll_thread = NULL;
+    }
 
     g_signal_emit(kirBiometrics,
                   signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-                  "Cancel fprint enroll!", "", 0,
+                  _("Cancel fprint enroll!"), "", 0,
                   TRUE);
 
     dbus_g_method_return(context);
@@ -464,9 +479,8 @@ do_finger_verify (gpointer data)
 {
     KiranBiometrics *kirBiometrics = KIRAN_BIOMETRICS (data);
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
-    unsigned char saveTemplate[10240] = {0};
-    unsigned int saveTemplateLen = 10240;
-    unsigned int timeout = 30000;
+    unsigned char saveTemplate[MAX_FPRINT_TEMPLATE] = {0};
+    unsigned int saveTemplateLen = MAX_FPRINT_TEMPLATE;
     unsigned char *template;
     unsigned int templateLen;
     int i = 0;
@@ -478,7 +492,7 @@ do_finger_verify (gpointer data)
     {
         g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                       "Not Found The Id Fprint Template!", TRUE);
+                       _("Not Found The Id Fprint Template!"), TRUE, FALSE);
 
         kiran_fprint_manager_close (priv->kfpmanager);
         priv->fprint_busy = FALSE;
@@ -497,11 +511,11 @@ do_finger_verify (gpointer data)
         }
         g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                      "Please place the finger!", FALSE);
+                      _("Please place the finger!"), FALSE, FALSE);
         ret = kiran_fprint_manager_acquire_finger_print (priv->kfpmanager,
                                                          &template,
                                                          &templateLen,
-                                                         timeout);
+                                                         DEFAULT_TIME_OUT);
         g_message ("kiran_fprint_manager_acquire_finger_print ret is %d, len %d\n", ret, templateLen);
         if (ret == FPRINT_RESULT_OK)
         {
@@ -515,7 +529,7 @@ do_finger_verify (gpointer data)
             {
                 g_signal_emit(kirBiometrics, 
                   	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                              "Fingerprint match!", TRUE);
+                              _("Fingerprint match!"), TRUE, TRUE);
                 //指纹匹配
                 break;
             }
@@ -523,7 +537,7 @@ do_finger_verify (gpointer data)
             {
                 g_signal_emit(kirBiometrics, 
                   	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                              "Fingerprint not match!", FALSE);
+                              _("Fingerprint not match!"), FALSE, TRUE);
             }
         }
     }
@@ -532,7 +546,7 @@ do_finger_verify (gpointer data)
     {
         g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                      "Fingerprint over max try count!", TRUE);
+                      _("Fingerprint over max try count!"), TRUE, FALSE);
     }
 
     kiran_fprint_manager_close (priv->kfpmanager);
@@ -551,10 +565,10 @@ kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics,
     g_autoptr(GError) error = NULL;
     int ret;
 
-    if (priv->fprint_busy || priv->fprint_verify_thread)
+    if (priv->fprint_busy)
     {
         g_set_error (&error, FPRINT_ERROR, 
-                         FPRINT_ERROR_DEVICE_BUSY, "Fingerprint Device Busy");
+                         FPRINT_ERROR_DEVICE_BUSY, _("Fingerprint Device Busy"));
 	dbus_g_method_return_error (context, error);
         return;
     }
@@ -576,7 +590,7 @@ kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics,
     else
     {
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_NOT_FOUND_DEVICE, "Fingerprint Device Not Found");
+		     FPRINT_ERROR_NOT_FOUND_DEVICE, _("Fingerprint Device Not Found"));
 	dbus_g_method_return_error (context, error);
 	return;
     }
@@ -591,23 +605,25 @@ kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics,
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     g_autoptr(GError) error = NULL;
 
-    if (priv->fp_action != FP_ACTION_VERIFY || !priv->fprint_verify_thread)
+    if (priv->fp_action != FP_ACTION_VERIFY)
     {
         g_set_error (&error, FPRINT_ERROR, 
-                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "No Action In Progress");
+                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, _("No Action In Progress"));
 	dbus_g_method_return_error (context, error);
         return;
     }
 
     priv->fp_action = FP_ACTION_NONE;
 
-    g_thread_join (priv->fprint_verify_thread);
-    priv->fprint_verify_thread = NULL;
-    priv->fprint_busy = FALSE;
+    if (priv->fprint_verify_thread)
+    {
+        g_thread_join (priv->fprint_verify_thread);
+        priv->fprint_verify_thread = NULL;
+    }
 
     g_signal_emit(kirBiometrics,
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                      "Cancel fprint verify!", TRUE);
+                      _("Cancel fprint verify!"), TRUE, FALSE);
     dbus_g_method_return(context);
 }
 
@@ -624,7 +640,7 @@ kiran_biometrics_delete_enrolled_finger (KiranBiometrics *kirBiometrics,
     if (ret != FPRINT_RESULT_OK)
     {
         g_set_error (&error, FPRINT_ERROR,
-                     FPRINT_ERROR_INTERNAL, "Internal Error");
+                     FPRINT_ERROR_INTERNAL, _("Internal Error"));
 	dbus_g_method_return_error (context, error);
     }
     

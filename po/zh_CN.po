@@ -1,0 +1,84 @@
+# kiran biometrics package simplified Chinese translation file.
+# Copyright (C) 2020  wangxiaoqing <wangxiaoqing@kylinos.com.cn>.
+# This file is distributed under the same license as the kiran-calendar package.
+# wangxiaoqing <wangxiaoqing@kylinos.com.cn>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kiran-biometrics\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-19 14:04+0800\n"
+"PO-Revision-Date: 2020-06-28 19:05+0700\n"
+"Last-Translator: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
+"Language-Team: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: Chinese\n"
+"X-Poedit-Country: CHINA\n"
+
+#: ../src/kiran-biometrics.c:293 ../src/kiran-biometrics.c:513
+msgid "Please place the finger!"
+msgstr "请录入指纹!"
+
+#: ../src/kiran-biometrics.c:300
+msgid "Please place the finger again!"
+msgstr "请再次录入指纹！"
+
+#: ../src/kiran-biometrics.c:326
+msgid "Please place the same finger!"
+msgstr "请使用同一个指纹录入!"
+
+#: ../src/kiran-biometrics.c:379
+msgid "Successed enroll finger!"
+msgstr "指纹录入成功!"
+
+#: ../src/kiran-biometrics.c:389
+msgid "Failed enroll finger!"
+msgstr "指纹录入失败!"
+
+#: ../src/kiran-biometrics.c:416 ../src/kiran-biometrics.c:570
+#, c-format
+msgid "Fingerprint Device Busy"
+msgstr "指纹设备忙"
+
+#: ../src/kiran-biometrics.c:435 ../src/kiran-biometrics.c:592
+#, c-format
+msgid "Fingerprint Device Not Found"
+msgstr "未找到指纹设备"
+
+#: ../src/kiran-biometrics.c:453 ../src/kiran-biometrics.c:610
+#, c-format
+msgid "No Action In Progress"
+msgstr "没有对应的操作"
+
+#: ../src/kiran-biometrics.c:468
+msgid "Cancel fprint enroll!"
+msgstr "取消指纹录入"
+
+#: ../src/kiran-biometrics.c:494
+msgid "Not Found The Id Fprint Template!"
+msgstr "该用户未录入指纹!"
+
+#: ../src/kiran-biometrics.c:531
+msgid "Fingerprint match!"
+msgstr "指纹匹配!"
+
+#: ../src/kiran-biometrics.c:539
+msgid "Fingerprint not match!"
+msgstr "指纹不匹配!"
+
+#: ../src/kiran-biometrics.c:548
+msgid "Fingerprint over max try count!"
+msgstr "超过最大尝试次数!"
+
+#: ../src/kiran-biometrics.c:625
+msgid "Cancel fprint verify!"
+msgstr "取消指纹验证!"
+
+#: ../src/kiran-biometrics.c:642
+#, c-format
+msgid "Internal Error"
+msgstr "内部错误"

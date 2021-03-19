@@ -129,6 +129,14 @@
               </doc:doc>
       </arg>
 
+      <arg type="b" name="match">
+              <doc:doc>
+                      <doc:summary>
+                              Whether the fprint match.
+                      </doc:summary>
+              </doc:doc>
+      </arg>
+
       <doc:doc>
               <doc:seealso>
                       <doc:ref type="description" to="verify-statuses">Verify Statuses</doc:ref> and <doc:ref type="method" to="Biometrics.VerifyFprintStop">Biometrics.VerifyFprintStop</doc:ref>.
