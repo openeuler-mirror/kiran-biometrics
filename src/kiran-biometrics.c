@@ -11,6 +11,7 @@
 #include "kiran-biometrics.h"
 #include "kiran-fprint-manager.h"
 #include "kiran-biometrics-types.h"
+#include "kiran-face-manager.h"
 
 #ifndef MAX_TRY_COUNT 
 #define MAX_TRY_COUNT 20               /* 最大尝试次数 */
@@ -22,15 +23,25 @@
 GQuark fprint_error_quark(void);
 GType fprint_error_get_type(void);
 
+GQuark face_error_quark(void);
+GType face_error_get_type(void);
+
 #define FPRINT_TYPE_ERROR fprint_error_get_type()
 #define FPRINT_ERROR_DBUS_INTERFACE "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error"
 
 #define FPRINT_ERROR fprint_error_quark()
 
+#define FACE_TYPE_ERROR face_error_get_type()
+#define FACE_ERROR_DBUS_INTERFACE "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error"
+
+#define FACE_ERROR face_error_quark()
+
 typedef enum {
-        FP_ACTION_NONE = 0,
+        ACTION_NONE = 0,
         FP_ACTION_VERIFY,
-        FP_ACTION_ENROLL
+        FP_ACTION_ENROLL,
+        FACE_ACTION_VERIFY,
+        FACE_ACTION_ENROLL,
 } FprintAction;
 
 struct _KiranBiometricsPrivate
@@ -42,6 +53,13 @@ struct _KiranBiometricsPrivate
     GThread *fprint_enroll_thread;
     GThread *fprint_verify_thread;
     gchar *fprint_verify_id;
+
+    KiranFaceManager* kfamanager;
+    FprintAction face_action;
+    gboolean face_busy;
+
+    GThread *face_enroll_thread;
+    GThread *face_verify_thread;
 };
 
 static void kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics, 
@@ -56,6 +74,18 @@ static void kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics,
 static void kiran_biometrics_delete_enrolled_finger (KiranBiometrics *kirBiometrics, 
 						     const char *id,
 						     DBusGMethodInvocation *context);
+static void kiran_biometrics_enroll_face_start (KiranBiometrics *kirBiometrics, 
+						DBusGMethodInvocation *context);
+static void kiran_biometrics_enroll_face_stop (KiranBiometrics *kirBiometrics, 
+					       DBusGMethodInvocation *context);
+static void kiran_biometrics_verify_face_start (KiranBiometrics *kirBiometrics, 
+						const char *id,
+						DBusGMethodInvocation *context);
+static void kiran_biometrics_verify_face_stop (KiranBiometrics *kirBiometrics, 
+					       DBusGMethodInvocation *context);
+static void kiran_biometrics_delete_enrolled_face (KiranBiometrics *kirBiometrics, 
+						   const char *id,
+						   DBusGMethodInvocation *context);
 #include "kiran-biometrics-stub.h"
 
 #define KIRAN_BIOMETRICS_GET_PRIVATE(O) \
@@ -64,6 +94,8 @@ static void kiran_biometrics_delete_enrolled_finger (KiranBiometrics *kirBiometr
 enum kiran_biometrics_signals {
     SIGNAL_FPRINT_VERIFY_STATUS,
     SIGNAL_FPRINT_ENROLL_STATUS,
+    SIGNAL_FACE_VERIFY_STATUS,
+    SIGNAL_FACE_ENROLL_STATUS,
     NUM_SIGNAL,
 };
 
@@ -81,6 +113,7 @@ kiran_biometrics_finalize (GObject *object)
     priv = kiranBiometrics->priv;
 
     g_object_unref (priv->kfpmanager);
+    g_object_unref (priv->kfamanager);
     g_free (priv->fprint_verify_id);
 
     G_OBJECT_CLASS (kiran_biometrics_parent_class)->finalize (object);
@@ -115,6 +148,61 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 				       0, 
 				       NULL, NULL, NULL, 
 				       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_BOOLEAN);
+
+    signals[SIGNAL_FACE_VERIFY_STATUS] = 
+	                g_signal_new ("verify-face-status",
+		    	               G_TYPE_FROM_CLASS (gobject_class), 
+		    	               G_SIGNAL_RUN_LAST, 
+				       0, 
+				       NULL, NULL, NULL, 
+				       G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN);
+
+    signals[SIGNAL_FACE_ENROLL_STATUS] = 
+	    		g_signal_new ("enroll-face-status",
+		    		       G_TYPE_FROM_CLASS (gobject_class), 
+		    	               G_SIGNAL_RUN_LAST, 
+				       0, 
+				       NULL, NULL, NULL, 
+				       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_BOOLEAN);
+}
+
+static void
+face_enroll_status_cb (KiranBiometrics *kirBiometrics,
+		gchar *id,
+		gint progress,
+		gpointer user_data)
+{
+    KiranBiometricsPrivate *priv = kirBiometrics->priv;
+
+    g_message ("face_enroll_status_cb progress: %d, id: %s\n",  progress, id);
+
+    if (progress == 100 && id) //采集完成
+    {
+         g_signal_emit(kirBiometrics,
+                          signals[SIGNAL_FACE_ENROLL_STATUS], 0,
+                          _("Successed enroll face!"), "", progress,
+                          TRUE);
+
+
+	 //关闭采集
+	 priv->face_action = ACTION_NONE;
+
+         if (priv->face_enroll_thread)
+         {
+             g_thread_join (priv->face_enroll_thread);
+             priv->face_enroll_thread = NULL;
+         }
+     
+         priv->face_busy = FALSE;
+
+    }
+    else
+    {
+         g_signal_emit(kirBiometrics,
+                          signals[SIGNAL_FACE_ENROLL_STATUS], 0,
+                          _("Please look the camera!"), "", progress,
+                          FALSE);
+    }
 }
 
 static void
@@ -124,11 +212,19 @@ kiran_biometrics_init (KiranBiometrics *self)
 
     priv = self->priv = KIRAN_BIOMETRICS_GET_PRIVATE (self);
     priv->fprint_busy = FALSE;
+    priv->face_busy = FALSE;
     priv->kfpmanager = kiran_fprint_manager_new ();
-    priv->fp_action = FP_ACTION_NONE;
+    priv->kfamanager = kiran_face_manager_new ();
+    priv->fp_action = ACTION_NONE;
+    priv->face_action = ACTION_NONE;
     priv->fprint_enroll_thread = NULL;
     priv->fprint_verify_thread = NULL;
     priv->fprint_verify_id = NULL;
+
+    g_signal_connect_swapped (priv->kfamanager,
+		              "enroll-face-status",
+		              G_CALLBACK (face_enroll_status_cb),
+		              self);
 }
 static int
 kiran_biometrics_remove_fprint (const gchar *md5)
@@ -136,7 +232,7 @@ kiran_biometrics_remove_fprint (const gchar *md5)
     gchar *path;
     int ret;
 
-    path = g_strdup_printf ("/etc/kiran-fprint/%s.bat", md5);
+    path = g_strdup_printf ("%s/%s.bat", FPRINT_DIR, md5);
     if (!g_file_test (path, G_FILE_TEST_EXISTS))
     {
 	g_free (path);
@@ -161,7 +257,7 @@ kiran_biometrics_get_fprint (unsigned char *template,
     gchar *path;
     gsize read_size;
 
-    path = g_strdup_printf ("/etc/kiran-fprint/%s.bat", md5);
+    path = g_strdup_printf ("%s/%s.bat", FPRINT_DIR, md5);
     if (!g_file_test (path, G_FILE_TEST_EXISTS))
     {
 	g_free (path);
@@ -220,7 +316,7 @@ kiran_biometrics_save_fprint (unsigned char *template,
 		    			 template,
 					 length);
 
-    dir = g_strdup_printf ("/etc/kiran-fprint");
+    dir = g_strdup_printf (FPRINT_DIR);
     if (!g_file_test (dir, G_FILE_TEST_IS_DIR))
     {
 	g_mkdir(dir, S_IRWXU);
@@ -416,7 +512,7 @@ do_finger_enroll (gpointer data)
     //完成采集
     kiran_fprint_manager_close (priv->kfpmanager);
     priv->fprint_busy = FALSE;
-    priv->fp_action = FP_ACTION_NONE;
+    priv->fp_action = ACTION_NONE;
 
     g_thread_exit (0);
 }
@@ -474,7 +570,7 @@ kiran_biometrics_enroll_fprint_stop (KiranBiometrics *kirBiometrics,
 	return;
     }
 
-    priv->fp_action = FP_ACTION_NONE;
+    priv->fp_action = ACTION_NONE;
 
     if (priv->fprint_enroll_thread)
     {
@@ -508,7 +604,7 @@ do_finger_verify (gpointer data)
 
         kiran_fprint_manager_close (priv->kfpmanager);
         priv->fprint_busy = FALSE;
-        priv->fp_action = FP_ACTION_NONE;
+        priv->fp_action = ACTION_NONE;
 
         return NULL ;
     }
@@ -578,7 +674,7 @@ do_finger_verify (gpointer data)
 
     kiran_fprint_manager_close (priv->kfpmanager);
     priv->fprint_busy = FALSE;
-    priv->fp_action = FP_ACTION_NONE;
+    priv->fp_action = ACTION_NONE;
 
     g_thread_exit (0);
 }
@@ -640,7 +736,7 @@ kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics,
         return;
     }
 
-    priv->fp_action = FP_ACTION_NONE;
+    priv->fp_action = ACTION_NONE;
 
     if (priv->fprint_verify_thread)
     {
@@ -671,11 +767,132 @@ kiran_biometrics_delete_enrolled_finger (KiranBiometrics *kirBiometrics,
     dbus_g_method_return(context);
 }
 
+static gpointer
+do_face_enroll (gpointer data)
+{
+    KiranBiometrics *kirBiometrics = KIRAN_BIOMETRICS (data);
+    KiranBiometricsPrivate *priv = kirBiometrics->priv;
+    int ret;
+
+    ret = FACE_RESULT_OK;
+    while (priv->face_action == FACE_ACTION_ENROLL
+	   && ret == FACE_RESULT_OK)
+    {
+        ret = kiran_face_manager_capture_face (priv->kfamanager);
+	usleep(10000);
+    }
+
+    kiran_face_manager_stop (priv->kfamanager);
+    g_message ("kiran_face_manager_stop##################### \n");
+    priv->face_busy = FALSE;
+    priv->face_action = ACTION_NONE;
+
+    g_thread_exit (0);
+}
+
+static void 
+kiran_biometrics_enroll_face_start (KiranBiometrics *kirBiometrics, 
+				    DBusGMethodInvocation *context)
+{
+    KiranBiometricsPrivate *priv = kirBiometrics->priv;
+    g_autoptr(GError) error = NULL;
+    int ret;
+
+    if (priv->face_busy)
+    {
+        g_set_error (&error, FACE_ERROR,
+                     FACE_ERROR_DEVICE_BUSY, _("Face Device Busy"));
+        dbus_g_method_return_error (context, error);
+        return;
+    }
+
+    ret = kiran_face_manager_start (priv->kfamanager);
+    if (ret == FACE_RESULT_OK)
+    {
+	ret = kiran_face_manager_do_enroll (priv->kfamanager);
+	if (ret == FACE_RESULT_OK)
+	{
+            priv->face_busy = TRUE;
+            priv->face_action = FACE_ACTION_ENROLL; 
+
+	    priv->fprint_enroll_thread = g_thread_new (NULL,
+		                            do_face_enroll,
+				            kirBiometrics); 
+	}
+
+        dbus_g_method_return(context, kiran_face_manager_get_addr (priv->kfamanager));
+	return;
+    }
+
+    g_set_error (&error, FACE_ERROR,
+                     FACE_ERROR_NOT_FOUND_DEVICE, _("Face Device Not Found"));
+    dbus_g_method_return_error (context, error);
+}
+
+static void 
+kiran_biometrics_enroll_face_stop (KiranBiometrics *kirBiometrics, 
+			           DBusGMethodInvocation *context)
+{
+    KiranBiometricsPrivate *priv = kirBiometrics->priv;
+    g_autoptr(GError) error = NULL;
+
+    if (priv->face_action != FACE_ACTION_ENROLL)
+    {
+        g_set_error (&error, FPRINT_ERROR,
+                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, _("No Action In Progress"));
+        dbus_g_method_return_error (context, error);
+        return;
+    }
+
+    priv->face_action = ACTION_NONE;
+
+    if (priv->face_enroll_thread)
+    {
+        g_thread_join (priv->face_enroll_thread);
+        priv->face_enroll_thread = NULL;
+    }
+
+    priv->face_busy = FALSE;
+
+    dbus_g_method_return(context);
+}
+
+static void 
+kiran_biometrics_verify_face_start (KiranBiometrics *kirBiometrics, 
+				    const char *id,
+				    DBusGMethodInvocation *context)
+{
+    dbus_g_method_return(context);
+}
+
+static void 
+kiran_biometrics_verify_face_stop (KiranBiometrics *kirBiometrics, 
+			           DBusGMethodInvocation *context)
+{
+    dbus_g_method_return(context);
+}
+
+static void 
+kiran_biometrics_delete_enrolled_face (KiranBiometrics *kirBiometrics, 
+				       const char *id,
+				       DBusGMethodInvocation *context)
+{
+    dbus_g_method_return(context);
+}
+
 GQuark fprint_error_quark(void)
 {
     static GQuark quark = 0;
     if (!quark)
             quark = g_quark_from_static_string("kiran-fprintd-error-quark");
+    return quark;
+}
+
+GQuark face_error_quark(void)
+{
+    static GQuark quark = 0;
+    if (!quark)
+            quark = g_quark_from_static_string("kiran-face-error-quark");
     return quark;
 }
 
@@ -697,6 +914,27 @@ fprint_error_get_type (void)
                     { 0, 0, 0 }
             };
             etype = g_enum_register_static ("FprintError", values);
+    }
+    return etype;
+}
+
+GType
+face_error_get_type (void)
+{
+    static GType etype = 0;
+ 
+    if (etype == 0) {
+            static const GEnumValue values[] =
+            {
+                    ENUM_ENTRY (FACE_ERROR_NOT_FOUND_DEVICE, "NoSuchDevice"),
+                    ENUM_ENTRY (FACE_ERROR_DEVICE_BUSY, "DeviceBusy"),
+                    ENUM_ENTRY (FACE_ERROR_INTERNAL, "Internal"),
+                    ENUM_ENTRY (FACE_ERROR_PERMISSION_DENIED, "PermissionDenied"),
+                    ENUM_ENTRY (FACE_ERROR_NO_FACE_TRACKER, "NoFaceTracker"),
+                    ENUM_ENTRY (FACE_ERROR_NO_ACTION_IN_PROGRESS, "NoActionInProgress"),
+                    { 0, 0, 0 }
+            };
+            etype = g_enum_register_static ("FaceError", values);
     }
     return etype;
 }

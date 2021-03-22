@@ -182,5 +182,178 @@
        </doc:doc>
     </method>
 
+    <method name="EnrollFaceStart">
+       <arg type="s" name="zmq_addr" direction="out">
+         <doc:doc><doc:summary>The addrerss of zerozmq service</doc:summary></doc:doc>
+       </arg>
+       <annotation name="org.freedesktop.DBus.GLib.Async" value="" />
+       <doc:doc>
+         <doc:description>
+                 <doc:para>
+			 Start do enrollemnt face for the user.
+                         Enrollment status is sent through <doc:ref type="signal" to="Biometrics::EnrollFaceStatus">Biometrics::EnrollFaceStatus</doc:ref>.
+                 </doc:para>
+         </doc:description>
+
+         <doc:errors>
+                 <doc:error name="&ERROR_PERMISSION_DENIED;">if the caller lacks the appropriate PolicyKit authorization</doc:error>
+                 <doc:error name="&ERROR_NOT_FOUND_DEVICE;">if the device was not found</doc:error>
+                 <doc:error name="&ERROR_DEVICE_BUSY;">if the device was already being used</doc:error>
+                 <doc:error name="&ERROR_INTERNAL;">if there was an internal error</doc:error>
+         </doc:errors>
+       </doc:doc>
+    </method>
+
+    <signal name="EnrollFaceStatus">
+      <arg type="s" name="message">
+        <doc:doc>
+                <doc:summary>
+                        A string representing the status of the enrollment.
+                </doc:summary>
+        </doc:doc>
+      </arg>
+
+      <arg type="s" name="id">
+        <doc:doc>
+                <doc:summary>
+                        A string representing the mark of the face.
+                </doc:summary>
+        </doc:doc>
+      </arg>
+
+      <arg type="int" name="progress">
+        <doc:doc>
+                <doc:summary>
+                        A number (0-100) representing the progress of the enrollment.
+                </doc:summary>
+        </doc:doc>
+      </arg>
+
+      <arg type="b" name="done">
+        <doc:doc>
+                <doc:summary>
+                        Whether the enrollment finished and can be stopped.
+                </doc:summary>
+        </doc:doc>
+      </arg>
+
+      <doc:doc>
+          <doc:seealso>
+                  <doc:ref type="description" to="enroll-statuses">Enrollment Statuses</doc:ref> and <doc:ref type="method" to="Biometrics.EnrollFaceStop">Biometrics.EnrollFaceStop</doc:ref>.
+          </doc:seealso>
+      </doc:doc>
+    </signal>
+
+    <method name="EnrollFaceStop">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="" />
+
+      <doc:doc>
+              <doc:description>
+                      <doc:para>
+                              Stop an on-going fingerprint enrollment started with <doc:ref type="method" to="Biometrics.EnrollFaceStart">Biometrics.EnrollFaceStart</doc:ref>.
+                      </doc:para>
+              </doc:description>
+
+              <doc:errors>
+                      <doc:error name="&ERROR_PERMISSION_DENIED;">if the caller lacks the appropriate PolicyKit authorization</doc:error>
+		      <doc:error name="&ERROR_NO_ACTION_IN_PROGRESS;">if there was no ongoing verification</doc:error>
+                      <doc:error name="&ERROR_INTERNAL;">if there was an internal error</doc:error>
+              </doc:errors>
+      </doc:doc>
+    </method>
+
+    <method name="VerifyFaceStart">
+       <arg type="s" name="id" direction="in">
+               <doc:doc><doc:summary>A string representing the finger to verify.</doc:summary></doc:doc>
+       </arg>
+       <annotation name="org.freedesktop.DBus.GLib.Async" value="" />
+
+       <doc:doc>
+         <doc:description>
+                 <doc:para>
+                         Check the chosen finger against a saved fingerprint and 
+                         verification status through <doc:ref type="signal" to="Biometrics::VerifyFprintStatus">Biometrics::VerifyFprintStatus</doc:ref>.
+                 </doc:para>
+         </doc:description>
+
+         <doc:errors>
+           <doc:error name="&ERROR_PERMISSION_DENIED;">if the caller lacks the appropriate PolicyKit authorization</doc:error>
+           <doc:error name="&ERROR_NOT_FOUND_DEVICE;">if the device was not found</doc:error>
+           <doc:error name="&ERROR_DEVICE_BUSY;">if the device was already being used</doc:error>
+           <doc:error name="&ERROR_INTERNAL;">if there was an internal error</doc:error>
+         </doc:errors>
+       </doc:doc>
+    </method>
+
+    <signal name="VerifyFaceStatus">
+      <arg type="s" name="result">
+              <doc:doc>
+                      <doc:summary>
+                              A string representing the status of the verification.
+                      </doc:summary>
+              </doc:doc>
+      </arg>
+
+      <arg type="b" name="done">
+              <doc:doc>
+                      <doc:summary>
+                              Whether the verification finished and can be stopped.
+                      </doc:summary>
+              </doc:doc>
+      </arg>
+
+      <arg type="b" name="match">
+              <doc:doc>
+                      <doc:summary>
+                              Whether the fprint match.
+                      </doc:summary>
+              </doc:doc>
+      </arg>
+
+      <doc:doc>
+              <doc:seealso>
+                      <doc:ref type="description" to="verify-statuses">Verify Statuses</doc:ref> and <doc:ref type="method" to="Biometrics.VerifyFacetStop">Biometrics.VerifyFaceStop</doc:ref>.
+              </doc:seealso>
+      </doc:doc>
+    </signal>
+
+     <method name="VerifyFaceStop">
+       <annotation name="org.freedesktop.DBus.GLib.Async" value="" />
+
+       <doc:doc>
+               <doc:description>
+                       <doc:para>
+                               Stop an on-going fingerprint verification started with <doc:ref type="method" to="Biometrics.VerifyFaceStart">Biometrics.VerifyFaceStart</doc:ref>.
+                       </doc:para>
+               </doc:description>
+
+               <doc:errors>
+                      <doc:error name="&ERROR_PERMISSION_DENIED;">if the caller lacks the appropriate PolicyKit authorization</doc:error>
+		      <doc:error name="&ERROR_NO_ACTION_IN_PROGRESS;">if there was no ongoing verification</doc:error>
+                      <doc:error name="&ERROR_INTERNAL;">if there was an internal error</doc:error>
+               </doc:errors>
+       </doc:doc>
+     </method>
+
+     <method name="DeleteEnrolledFace">
+       <arg type="s" name="id" direction="in">
+               <doc:doc><doc:summary>The id for the enrolled fingerprint. </doc:summary></doc:doc>
+       </arg>
+       <annotation name="org.freedesktop.DBus.GLib.Async" value="" />
+
+       <doc:doc>
+               <doc:description>
+                       <doc:para>
+                               Delete all the enrolled face for the chosen id.
+                       </doc:para>
+               </doc:description>
+
+               <doc:errors>
+                       <doc:error name="&ERROR_PERMISSION_DENIED;">if the caller lacks the appropriate PolicyKit authorization</doc:error>
+                       <doc:error name="&ERROR_INTERNAL;">if there was an internal error</doc:error>
+               </doc:errors>
+       </doc:doc>
+     </method>
+
   </interface>
 </node>
