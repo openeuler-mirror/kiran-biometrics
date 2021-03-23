@@ -39,6 +39,12 @@ add_library(pam_kiran_authmode MODULE pam-kiran-authmode.c kiran-pam.c kiran-acc
 set_target_properties(pam_kiran_authmode PROPERTIES PREFIX "")
 target_link_libraries(pam_kiran_authmode pam_misc ${GLIB2_LIBRARIES} ${GDBUS_LIBRARIES} ${GLIB_JSON_LIBRARIES})
 
+add_library(pam_kiran_face MODULE pam-kiran-face.c kiran-pam.c)
+add_dependencies(pam_kiran_face kiran-biometrics-proxy.h)
+set_target_properties(pam_kiran_face PROPERTIES PREFIX "")
+target_link_libraries(pam_kiran_face pam_misc ${GLIB2_LIBRARIES} ${GDBUS_LIBRARIES})
+
 install(TARGETS pam_kiran_fprintd LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/security/)
 install(TARGETS pam_kiran_authmode LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/security/)
+install(TARGETS pam_kiran_face LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/security/)
 install(FILES kiran-pam-msg.h DESTINATION /usr/include/)
