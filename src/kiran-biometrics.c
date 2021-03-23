@@ -59,8 +59,7 @@ struct _KiranBiometricsPrivate
     FprintAction face_action;
     gboolean face_busy;
 
-    GThread *face_enroll_thread;
-    GThread *face_verify_thread;
+    GThread *face_capture_thread;
 };
 
 static void kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics, 
@@ -189,10 +188,10 @@ face_enroll_status_cb (KiranBiometrics *kirBiometrics,
 	 //关闭采集
 	 priv->face_action = ACTION_NONE;
 
-         if (priv->face_enroll_thread)
+         if (priv->face_capture_thread)
          {
-             g_thread_join (priv->face_enroll_thread);
-             priv->face_enroll_thread = NULL;
+             g_thread_join (priv->face_capture_thread);
+             priv->face_capture_thread = NULL;
          }
      
          priv->face_busy = FALSE;
@@ -204,6 +203,41 @@ face_enroll_status_cb (KiranBiometrics *kirBiometrics,
                           signals[SIGNAL_FACE_ENROLL_STATUS], 0,
                           _("Please look the camera!"), "", progress,
                           FALSE);
+    }
+}
+
+static void
+face_verify_status_cb (KiranBiometrics *kirBiometrics,
+		       gboolean match,
+		       gpointer user_data)
+{
+    KiranBiometricsPrivate *priv = kirBiometrics->priv;
+
+    g_message ("face_enroll_verify_cb result is : %d\n",  match);
+
+    if (match) //人脸验证匹配
+    {
+	 g_signal_emit(kirBiometrics,
+                          signals[SIGNAL_FACE_VERIFY_STATUS], 0,
+                          _("Face match!"), TRUE, TRUE);
+
+
+         //关闭采集
+         priv->face_action = ACTION_NONE;
+
+         if (priv->face_capture_thread)
+         {
+             g_thread_join (priv->face_capture_thread);
+             priv->face_capture_thread = NULL;
+         }
+
+         priv->face_busy = FALSE;
+    }
+    else
+    {
+	g_signal_emit(kirBiometrics,
+                          signals[SIGNAL_FACE_VERIFY_STATUS], 0,
+                          _("Face not match! Please look the camera!"), FALSE, FALSE);
     }
 }
 
@@ -222,10 +256,16 @@ kiran_biometrics_init (KiranBiometrics *self)
     priv->fprint_enroll_thread = NULL;
     priv->fprint_verify_thread = NULL;
     priv->fprint_verify_id = NULL;
+    priv->face_capture_thread = NULL;
 
     g_signal_connect_swapped (priv->kfamanager,
 		              "enroll-face-status",
 		              G_CALLBACK (face_enroll_status_cb),
+		              self);
+
+    g_signal_connect_swapped (priv->kfamanager,
+		              "verify-face-status",
+		              G_CALLBACK (face_verify_status_cb),
 		              self);
 }
 static int
@@ -772,14 +812,15 @@ kiran_biometrics_delete_enrolled_finger (KiranBiometrics *kirBiometrics,
 }
 
 static gpointer
-do_face_enroll (gpointer data)
+do_face_capture (gpointer data)
 {
     KiranBiometrics *kirBiometrics = KIRAN_BIOMETRICS (data);
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     int ret;
 
     ret = FACE_RESULT_OK;
-    while (priv->face_action == FACE_ACTION_ENROLL
+    while ((priv->face_action == FACE_ACTION_ENROLL
+	    || priv->face_action == FACE_ACTION_VERIFY)
 	   && ret == FACE_RESULT_OK)
     {
         ret = kiran_face_manager_capture_face (priv->kfamanager);
@@ -787,7 +828,7 @@ do_face_enroll (gpointer data)
     }
 
     kiran_face_manager_stop (priv->kfamanager);
-    dzlog_debug ("stop face enroll\n");
+    dzlog_debug ("stop face caputer\n");
     priv->face_busy = FALSE;
     priv->face_action = ACTION_NONE;
 
@@ -819,8 +860,8 @@ kiran_biometrics_enroll_face_start (KiranBiometrics *kirBiometrics,
             priv->face_busy = TRUE;
             priv->face_action = FACE_ACTION_ENROLL; 
 
-	    priv->fprint_enroll_thread = g_thread_new (NULL,
-		                            do_face_enroll,
+	    priv->face_capture_thread = g_thread_new (NULL,
+		                            do_face_capture,
 				            kirBiometrics); 
 	}
 
@@ -850,10 +891,10 @@ kiran_biometrics_enroll_face_stop (KiranBiometrics *kirBiometrics,
 
     priv->face_action = ACTION_NONE;
 
-    if (priv->face_enroll_thread)
+    if (priv->face_capture_thread)
     {
-        g_thread_join (priv->face_enroll_thread);
-        priv->face_enroll_thread = NULL;
+        g_thread_join (priv->face_capture_thread);
+        priv->face_capture_thread = NULL;
     }
 
     priv->face_busy = FALSE;
@@ -866,13 +907,66 @@ kiran_biometrics_verify_face_start (KiranBiometrics *kirBiometrics,
 				    const char *id,
 				    DBusGMethodInvocation *context)
 {
-    dbus_g_method_return(context);
+    KiranBiometricsPrivate *priv = kirBiometrics->priv;
+    g_autoptr(GError) error = NULL;
+    int ret;
+
+    if (priv->face_busy)
+    {
+        g_set_error (&error, FACE_ERROR,
+                     FACE_ERROR_DEVICE_BUSY, _("Face Device Busy"));
+        dbus_g_method_return_error (context, error);
+        return;
+    }
+
+    ret = kiran_face_manager_start (priv->kfamanager);
+    if (ret == FACE_RESULT_OK)
+    {
+        ret = kiran_face_manager_do_verify (priv->kfamanager, id);
+        if (ret == FACE_RESULT_OK)
+        {
+            priv->face_busy = TRUE;
+            priv->face_action = FACE_ACTION_VERIFY;
+
+            priv->face_capture_thread = g_thread_new (NULL,
+                                            do_face_capture,
+                                            kirBiometrics);
+        }
+
+        dbus_g_method_return(context, kiran_face_manager_get_addr (priv->kfamanager));
+        return;
+    }
+
+    g_set_error (&error, FACE_ERROR,
+                     FACE_ERROR_NOT_FOUND_DEVICE, _("Face Device Not Found"));
+    dbus_g_method_return_error (context, error);
 }
 
 static void 
 kiran_biometrics_verify_face_stop (KiranBiometrics *kirBiometrics, 
 			           DBusGMethodInvocation *context)
 {
+    KiranBiometricsPrivate *priv = kirBiometrics->priv;
+    g_autoptr(GError) error = NULL;
+
+    if (priv->face_action != FACE_ACTION_VERIFY)
+    {
+        g_set_error (&error, FPRINT_ERROR,
+                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, _("No Action In Progress"));
+        dbus_g_method_return_error (context, error);
+        return;
+    }
+
+    priv->face_action = ACTION_NONE;
+
+    if (priv->face_capture_thread)
+    {
+        g_thread_join (priv->face_capture_thread);
+        priv->face_capture_thread = NULL;
+    }
+
+    priv->face_busy = FALSE;
+
     dbus_g_method_return(context);
 }
 

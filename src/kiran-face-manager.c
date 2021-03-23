@@ -11,8 +11,10 @@
 
 #define FACE_CAS_FILE "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml"
 #define EYE_CAS_FILE "/usr/share/OpenCV/haarcascades/haarcascade_eye_tree_eyeglasses.xml"
-#define DEFAULT_ZMP_ADDR "ipc://KiranFaceService.ipc"
+#define DEFAULT_ZMQ_ADDR "ipc://KiranFaceService.ipc"
 #define ENROLL_FACE_NUM 10
+
+#define FACE_ZMQ_ADDR "tcp://10.20.1.15:6845"
 
 struct _KiranFaceManagerPrivate
 {
@@ -30,6 +32,7 @@ struct _KiranFaceManagerPrivate
     gpointer ctx;
     gpointer service;
     gchar *addr;
+    gpointer client;
 
     gboolean do_enroll;
     gboolean do_verify;
@@ -41,6 +44,8 @@ struct _KiranFaceManagerPrivate
 
     GMutex face_mutex;
     GCond face_cond;
+
+    gchar *id; //认证时使用的id
 };
 
 enum kiran_biometrics_signals {
@@ -80,6 +85,7 @@ kiran_face_manager_finalize (GObject *object)
 
     g_free (priv->addr);
     zmq_close (priv->service);
+    zmq_close (priv->client);
     zmq_ctx_term (priv->ctx);
 
     G_OBJECT_CLASS (kiran_face_manager_parent_class)->finalize (object);
@@ -100,7 +106,7 @@ kiran_face_manager_class_init (KiranFaceManagerClass *class)
                                        G_SIGNAL_RUN_LAST,
                                        0,
                                        NULL, NULL, NULL,
-                                       G_TYPE_NONE, 0);
+                                       G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
     signals[SIGNAL_FACE_ENROLL_STATUS] =
                         g_signal_new ("enroll-face-status",
@@ -319,6 +325,120 @@ kiran_face_manager_save_faces (KiranFaceManager *manager,
     return ret;
 }
 
+static int
+face_compare (KiranFaceManager *manager,
+	      GCVImage *image1,
+	      GCVImage *image2)
+{
+    KiranFaceManagerPrivate *priv = manager->priv;
+    gsize width1, height1, len1, width2, height2, len2;
+    int total_len;
+    int ret;
+    char result[2] = {0};
+    struct compare_source *compare;
+    const gchar *data1, *data2;
+    GBytes *bytes1, *bytes2;
+    gint channel;
+
+    ret = FACE_RESULT_FAIL;
+    width1 = gcv_matrix_get_n_columns (GCV_MATRIX(image1));
+    height1 = gcv_matrix_get_n_rows (GCV_MATRIX(image1));
+    channel = gcv_matrix_get_n_channels(GCV_MATRIX(image1));
+
+    bytes1 = gcv_matrix_get_bytes (GCV_MATRIX(image1));
+    data1 = g_bytes_get_data (bytes1, &len1);
+
+    width2 = gcv_matrix_get_n_columns (GCV_MATRIX(image2));
+    height2 = gcv_matrix_get_n_rows (GCV_MATRIX(image2));
+    bytes2 = gcv_matrix_get_bytes (GCV_MATRIX(image2));
+    data2 = g_bytes_get_data (bytes2, &len2);
+
+    total_len = len1 + len2 + 7 * sizeof (unsigned int) + sizeof (unsigned char); //发送的总长度
+    compare = g_malloc0 (total_len);
+
+    compare->type = COMPARE_IMAGE_TYPE;
+    compare->channel = channel;
+    compare->width1 = width1;
+    compare->height1 = height1;
+    compare->len1 = len1;
+    compare->width2 = width2;
+    compare->height2 = height2;
+    compare->len2 = len2;
+
+    memcpy (compare->content, data1, len1);
+    memcpy (compare->content + len1, data2, len2);
+
+    ret = zmq_send (priv->client, (unsigned char*)compare, total_len, ZMQ_DONTWAIT);
+    g_message ("send to face compare service[%x, %d, %d, %d, %d] %d\n", channel, compare->type, width1, height1, len1, ret);
+
+    zmq_recv(priv->client, result, 2, 0);
+    if(result[0] == COMPARE_RESULT_TYPE && result[1] == FACE_MATCH )
+    {
+   	ret = FACE_RESULT_OK;
+    }
+
+    g_bytes_unref (bytes1);
+    g_bytes_unref (bytes2);
+    g_free (compare);
+
+    return ret;
+}
+
+static int
+face_verify (KiranFaceManager *manager)
+{
+    KiranFaceManagerPrivate *priv = manager->priv;
+    gchar *path;
+    GError *error;
+    GDir *dir;
+    gchar *name;
+    int ret;
+
+    error = NULL;
+    path = g_strdup_printf ("%s/%s", FACE_DIR, priv->id);
+    dir = g_dir_open (path, 0, &error);
+
+    if (error)
+    {
+	g_message ("open face dir %s fail:%s", path, error->message); 
+	g_error_free (error);
+
+        return FACE_RESULT_FAIL;
+    }
+
+    ret = FACE_RESULT_FAIL;
+    while ((name = g_dir_read_name (dir)))
+    {
+	gchar *file_path;
+
+	file_path = g_strdup_printf ("%s/%s", path, name);
+	if (!g_file_test (file_path, G_FILE_TEST_IS_DIR))
+	{
+	    GCVImage *image;
+
+	    image = gcv_image_read(file_path,
+                                   GCV_IMAGE_READ_FLAG_UNCHANGED,
+                                   NULL);
+	    if (image)
+	        ret = face_compare (manager, priv->face, image);
+
+	    g_object_unref (image);
+	}
+	g_free (file_path);
+
+	if (ret == FACE_RESULT_OK)
+	{
+	    //匹配成功
+	    break;
+	}
+    }
+
+    g_dir_close (dir); 
+    g_free(path);
+
+    return ret;
+}
+
 static gpointer
 do_face_handle (gpointer data)
 {
@@ -369,12 +489,28 @@ do_face_handle (gpointer data)
 	    }
 	}
 	
-	g_object_unref (priv->face);
 	if (priv->do_verify)
 	{
 	    //认证人脸
+	    ret = face_verify (manager);
+	    if (ret == FACE_RESULT_OK)
+	    {
+		//认证成功
+		priv->do_verify = FALSE;
+                g_signal_emit(manager,
+                              signals[SIGNAL_FACE_VERIFY_STATUS], 0,
+                              TRUE);
+	    }
+	    else
+	    {
+		//认证失败
+                g_signal_emit(manager,
+                              signals[SIGNAL_FACE_VERIFY_STATUS], 0,
+                              FALSE);
+	    }
 	}
 
+	g_object_unref (priv->face);
 	g_mutex_unlock (&priv->face_mutex);
     }
 
@@ -425,7 +561,7 @@ kiran_face_manager_init (KiranFaceManager *self)
                                       do_face_handle,
                                       self);
 
-    priv->addr = g_strdup (DEFAULT_ZMP_ADDR);
+    priv->addr = g_strdup (DEFAULT_ZMQ_ADDR);
     priv->ctx = zmq_ctx_new();
     priv->service = zmq_socket (priv->ctx, ZMQ_PUB);
     ret = zmq_bind (priv->service,  priv->addr);
@@ -433,6 +569,16 @@ kiran_face_manager_init (KiranFaceManager *self)
     {
 	dzlog_debug("zmq bind  %s failed!\n", priv->addr);
     }
+
+    priv->client = zmq_socket (priv->ctx, ZMQ_REQ);
+    ret = zmq_connect (priv->client, FACE_ZMQ_ADDR);
+    if (ret != 0)
+    {
+	dzlog_debug("zmq coennt %s failed!\n", FACE_ZMQ_ADDR);
+	g_message ("zmq connect  %s failed!\n", FACE_ZMQ_ADDR);
+    }
+
+    priv->id = NULL;
 }
 
 int 
@@ -452,10 +598,6 @@ kiran_face_manager_start (KiranFaceManager *kfamanager)
 	g_error_free (error);
 	return FACE_RESULT_FAIL;
     }
-
-    g_signal_emit(kfamanager,
-                  signals[SIGNAL_FACE_ENROLL_STATUS], 0,
-                  "", priv->enroll_face_count * 10);
     
     return FACE_RESULT_OK;
 }
@@ -472,10 +614,12 @@ send_image_data (KiranFaceManager *kfamanager,
     int height;
     gsize len;
     gsize total_len;
+    int channel;
     int ret;
 
     width = gcv_matrix_get_n_columns (GCV_MATRIX(image));
     height = gcv_matrix_get_n_rows (GCV_MATRIX(image));
+    channel = gcv_matrix_get_n_channels(GCV_MATRIX(image));
     bytes = gcv_matrix_get_bytes (GCV_MATRIX(image));
     data = g_bytes_get_data (bytes, &len);
 
@@ -483,6 +627,7 @@ send_image_data (KiranFaceManager *kfamanager,
     fimg = g_malloc0 (total_len); 
 
     fimg->type = IMAGE_TYPE;
+    fimg->channel = channel;
     fimg->width = width;
     fimg->height = height;
     fimg->len = len;
@@ -541,11 +686,16 @@ kiran_face_manager_do_enroll (KiranFaceManager *kfamanager)
     priv->do_enroll = TRUE;
     priv->enroll_face_count = 0;
 
+    g_signal_emit(kfamanager,
+                  signals[SIGNAL_FACE_ENROLL_STATUS], 0,
+                  "", priv->enroll_face_count * 10);
+
     return FACE_RESULT_OK;
 }
 
 int 
-kiran_face_manager_do_verify (KiranFaceManager *kfamanager)
+kiran_face_manager_do_verify (KiranFaceManager *kfamanager,
+		              const gchar *id)
 {
     KiranFaceManagerPrivate *priv = kfamanager->priv;
 
@@ -555,6 +705,9 @@ kiran_face_manager_do_verify (KiranFaceManager *kfamanager)
     }
 
     priv->do_verify = TRUE;
+
+    g_free (priv->id);
+    priv->id = g_strdup (id);
 
     return FACE_RESULT_OK;
 }
