@@ -1,12 +1,13 @@
 #include <opencv-glib/opencv-glib.h>
 #include <glib/gstdio.h>
 #include <zmq.h>
+#include <zlog_ex.h>
+#include <json-glib/json-glib.h>
 
 #include "config.h"
 #include "kiran-biometrics-types.h"
 #include "kiran-face-manager.h"
 #include "kiran-face-msg.h"
-#include "json-glib/json-glib.h"
 
 #define FACE_CAS_FILE "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml"
 #define EYE_CAS_FILE "/usr/share/OpenCV/haarcascades/haarcascade_eye_tree_eyeglasses.xml"
@@ -173,7 +174,6 @@ send_faces_axis (KiranFaceManager *manager,
 
     data = json_generator_to_data (generator, &len);
 
-    g_message ("------------################json data: %s--------(%d)\n", data, len);
 
     total_len = len + sizeof (unsigned int) + sizeof (unsigned char); //发送的总长度
     axis = g_malloc0 (total_len); 
@@ -182,6 +182,8 @@ send_faces_axis (KiranFaceManager *manager,
     g_strlcpy (axis->content, data, len);
 
     ret = zmq_send (priv->service, (unsigned char*)axis, total_len, ZMQ_DONTWAIT);
+
+    dzlog_debug ("send face json data: %s--------(%d)\n", data, ret);
 
     json_array_unref (array);
     g_object_unref (generator);
@@ -206,7 +208,7 @@ do_face_detect (gpointer data)
 
 	send_faces_axis (manager, faces);
 
-	g_message ("face and eys ========== %d, %d", g_list_length (faces), g_list_length (eyes));
+	dzlog_debug ("detect face and eys number is %d, %d", g_list_length (faces), g_list_length (eyes));
 
 	if (g_list_length (faces) == 1 && 
 	    g_list_length (eyes) == 2)
@@ -251,7 +253,7 @@ kiran_face_manager_save_face_to_file (KiranFaceManager *manager,
 
     if (error)
     {
-	g_message ("kiran_face_manager_save_face_to_file: %s", error->message);
+	dzlog_debug ("kiran_face_manager_save_face_to_file: %s", error->message);
 	g_error_free (error);
 	return FACE_RESULT_FAIL;
     }
@@ -392,7 +394,7 @@ kiran_face_manager_init (KiranFaceManager *self)
     priv->face_cas = gcv_cascade_classifier_new (FACE_CAS_FILE, &error);
     if (error)
     {
-	g_message("gcv_cascade_classifier_new face ---%s\n", error->message);
+	dzlog_debug("gcv_cascade_classifier_new face fail: %s\n", error->message);
 	g_error_free (error);
     }
 
@@ -400,7 +402,7 @@ kiran_face_manager_init (KiranFaceManager *self)
     priv->eye_cas = gcv_cascade_classifier_new (EYE_CAS_FILE, &error);
     if (error)
     {
-	g_message("gcv_cascade_classifier_new eye ---%s\n", error->message);
+	dzlog_debug("gcv_cascade_classifier_new eye fail: %s\n", error->message);
 	g_error_free (error);
     }
 
@@ -429,7 +431,7 @@ kiran_face_manager_init (KiranFaceManager *self)
     ret = zmq_bind (priv->service,  priv->addr);
     if (ret != 0)
     {
-	g_message("zmq bind  %s failed!\n", priv->addr);
+	dzlog_debug("zmq bind  %s failed!\n", priv->addr);
     }
 }
 
@@ -446,7 +448,7 @@ kiran_face_manager_start (KiranFaceManager *kfamanager)
     
     if (error)
     {
-	g_message("kiran_face_manager_start ---%s\n", error->message);
+	dzlog_debug("kiran_face_manager_start fail: %s\n", error->message);
 	g_error_free (error);
 	return FACE_RESULT_FAIL;
     }
@@ -520,7 +522,7 @@ kiran_face_manager_capture_face (KiranFaceManager *kfamanager)
     }
     else
     {
-	g_message("kiran_face_manager_capture_face can not read image");
+	dzlog_debug("kiran_face_manager_capture_face can not read image");
     }
 
     return FACE_RESULT_OK;

@@ -3,7 +3,7 @@ Kiran Biometrics:
 生物认证平台，包括指纹，人脸识别。
 
 安装依赖:
-yum install glib-2.0-devel dbus-glib-devel fingerprint-sdk-devel
+yum install glib-2.0-devel dbus-glib-devel fingerprint-sdk-devel zlog-devel
 
 编译：
 mkdir build && cd build

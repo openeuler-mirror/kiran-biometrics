@@ -7,6 +7,7 @@
 #include <glib-object.h>
 #include <gmodule.h>
 #include <locale.h>
+#include <zlog_ex.h>
 #include "kiran-biometrics.h"
 
 
@@ -18,6 +19,9 @@ int main (int argc, char **argv)
     DBusGConnection *kiran_biometrics_dbus_conn;
     DBusGProxy *driver_proxy;
     guint request_name_ret;
+
+    if (dzlog_init_ex (NULL, "kylinsec-system-app", "kiran-biometrics", "kiran_biometrics_manager") < 0)
+	return -1;
 
     setlocale(LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
@@ -31,7 +35,7 @@ int main (int argc, char **argv)
     kiran_biometrics_dbus_conn = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
     if (kiran_biometrics_dbus_conn == NULL)
     {
-	g_warning("Failed to open connection to bus: %s", error->message);
+	dzlog_error("Failed to open connection to bus: %s", error->message);
 	return 1;
     }
 
@@ -43,11 +47,11 @@ int main (int argc, char **argv)
     if (!org_freedesktop_DBus_request_name (driver_proxy, SERVICE_NAME,
 			    0, &request_name_ret, &error))
     {
-	g_warning("Failed to get name: %s", error->message);
+	dzlog_error("Failed to get name: %s", error->message);
     }
 
     if (request_name_ret != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER) {
-        g_warning ("Got result code %u from requesting name", request_name_ret);
+        dzlog_error ("Got result code %u from requesting name", request_name_ret);
         return 1;
     }
 
@@ -58,6 +62,7 @@ int main (int argc, char **argv)
     g_main_loop_run (loop);
 
     g_object_unref (kirBiometrics);
+    zlog_fini ();
 
     return 0;
 }

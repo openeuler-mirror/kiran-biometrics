@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <errno.h>
+#include <zlog_ex.h>
 
 #include "kiran-biometrics.h"
 #include "kiran-fprint-manager.h"
@@ -175,6 +176,7 @@ face_enroll_status_cb (KiranBiometrics *kirBiometrics,
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
 
     g_message ("face_enroll_status_cb progress: %d, id: %s\n",  progress, id);
+    dzlog_debug ("face_enroll_status_cb progress: %d, id: %s\n",  progress, id);
 
     if (progress == 100 && id) //采集完成
     {
@@ -408,7 +410,9 @@ do_finger_enroll (gpointer data)
     	                                                 &templates[i],
                                                          &length,
     					                 DEFAULT_TIME_OUT);
-        g_message ("kiran_fprint_manager_acquire_finger_print ret is %d, len %d\n", ret, length);
+
+        dzlog_debug ("kiran_fprint_manager_acquire_finger_print ret is %d, len %d\n", ret, length);
+
         templateLens[i] = length;
         if (ret == FPRINT_RESULT_OK)
         {
@@ -420,7 +424,7 @@ do_finger_enroll (gpointer data)
             		    			       templates[i],
             					       templateLens[i]);
             
-                g_message ("kiran_fprint_manager_template_match ret is %d\n", ret);
+                dzlog_debug ("kiran_fprint_manager_template_match ret is %d\n", ret);
             
                 if (ret != FPRINT_RESULT_OK)
                 {
@@ -459,7 +463,7 @@ do_finger_enroll (gpointer data)
     					           templates[2],
     					           &regTemplate,
     					           &length);
-        g_message ("kiran_fprint_manager_template_merge ret is %d, len is %d\n", ret, length);
+        dzlog_debug ("kiran_fprint_manager_template_merge ret is %d, len is %d\n", ret, length);
     }
     
     if (ret == FPRINT_RESULT_OK)
@@ -534,7 +538,7 @@ kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics,
     }
 
     ret = kiran_fprint_manager_open (priv->kfpmanager);
-    g_message ("kiran_fprint_manager_open ret is %d\n", ret);
+    dzlog_debug ("kiran_fprint_manager_open ret is %d\n", ret);
     if (ret == FPRINT_RESULT_OK)
     {
         priv->fprint_busy = TRUE;
@@ -595,7 +599,7 @@ do_finger_verify (gpointer data)
     int ret = 0;
 
     ret = kiran_biometrics_get_fprint (saveTemplate, &saveTemplateLen, priv->fprint_verify_id);
-    g_message ("kiran_biometrics_get_fprint ret is %d and len is %d\n", ret, saveTemplateLen);
+    dzlog_debug ("kiran_biometrics_get_fprint ret is %d and len is %d\n", ret, saveTemplateLen);
     if (ret != FPRINT_RESULT_OK)
     {
         g_signal_emit(kirBiometrics, 
@@ -629,7 +633,7 @@ do_finger_verify (gpointer data)
                                                          &template,
                                                          &templateLen,
                                                          DEFAULT_TIME_OUT);
-        g_message ("kiran_fprint_manager_acquire_finger_print ret is %d, len %d\n", ret, templateLen);
+        dzlog_debug ("kiran_fprint_manager_acquire_finger_print ret is %d, len %d\n", ret, templateLen);
         if (ret == FPRINT_RESULT_OK)
         {
             ret = kiran_fprint_manager_template_match (priv->kfpmanager,
@@ -637,7 +641,7 @@ do_finger_verify (gpointer data)
                                                                templateLen,
                                                                saveTemplate,
                                                                saveTemplateLen);
-            g_message ("kiran_fprint_manager_template_match ret is %d\n", ret);
+            dzlog_debug ("kiran_fprint_manager_template_match ret is %d\n", ret);
             if (ret == FPRINT_RESULT_OK)
             {
                 g_signal_emit(kirBiometrics, 
@@ -697,7 +701,7 @@ kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics,
     }
 
     ret = kiran_fprint_manager_open (priv->kfpmanager);
-    g_message ("kiran_fprint_manager_open ret is %d\n", ret);
+    dzlog_debug ("kiran_fprint_manager_open ret is %d\n", ret);
     if (ret == FPRINT_RESULT_OK)
     {
         priv->fprint_busy = TRUE;
@@ -783,7 +787,7 @@ do_face_enroll (gpointer data)
     }
 
     kiran_face_manager_stop (priv->kfamanager);
-    g_message ("kiran_face_manager_stop##################### \n");
+    dzlog_debug ("stop face enroll\n");
     priv->face_busy = FALSE;
     priv->face_action = ACTION_NONE;
 
