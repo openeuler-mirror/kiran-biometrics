@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-22 19:41+0800\n"
+"POT-Creation-Date: 2021-03-24 11:49+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,85 +17,93 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../src/kiran-biometrics.c:181
+#: ../src/kiran-biometrics.c:184
 msgid "Successed enroll face!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:188
+#: ../src/kiran-biometrics.c:204
 msgid "Please look the camera!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:381 ../src/kiran-biometrics.c:610
+#: ../src/kiran-biometrics.c:222
+msgid "Face match!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:240
+msgid "Face not match! Please look the camera!"
+msgstr ""
+
+#: ../src/kiran-biometrics.c:438 ../src/kiran-biometrics.c:669
 msgid "Please place the finger!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:388
+#: ../src/kiran-biometrics.c:445
 msgid "Please place the finger again!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:414
+#: ../src/kiran-biometrics.c:473
 msgid "Please place the same finger!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:467
+#: ../src/kiran-biometrics.c:526
 msgid "Successed enroll finger!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:480
+#: ../src/kiran-biometrics.c:539
 msgid "Failed enroll finger!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:487
+#: ../src/kiran-biometrics.c:546
 msgid "Cancel fprint enroll!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:516 ../src/kiran-biometrics.c:679
+#: ../src/kiran-biometrics.c:575 ../src/kiran-biometrics.c:738
 #, c-format
 msgid "Fingerprint Device Busy"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:535 ../src/kiran-biometrics.c:701
+#: ../src/kiran-biometrics.c:594 ../src/kiran-biometrics.c:760
 #, c-format
 msgid "Fingerprint Device Not Found"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:553 ../src/kiran-biometrics.c:719
-#: ../src/kiran-biometrics.c:828
+#: ../src/kiran-biometrics.c:612 ../src/kiran-biometrics.c:778
+#: ../src/kiran-biometrics.c:887 ../src/kiran-biometrics.c:955
 #, c-format
 msgid "No Action In Progress"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:588
+#: ../src/kiran-biometrics.c:647
 msgid "Not Found The Id Fprint Template!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:630
+#: ../src/kiran-biometrics.c:689
 msgid "Fingerprint match!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:638
+#: ../src/kiran-biometrics.c:697
 msgid "Fingerprint not match, place again!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:650
+#: ../src/kiran-biometrics.c:709
 msgid "Cancel fprint verify!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:656
+#: ../src/kiran-biometrics.c:715
 msgid "Fingerprint over max try count!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:748
+#: ../src/kiran-biometrics.c:807
 #, c-format
 msgid "Internal Error"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:790
+#: ../src/kiran-biometrics.c:849 ../src/kiran-biometrics.c:917
 #, c-format
 msgid "Face Device Busy"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:814
+#: ../src/kiran-biometrics.c:873 ../src/kiran-biometrics.c:941
 #, c-format
 msgid "Face Device Not Found"
 msgstr ""

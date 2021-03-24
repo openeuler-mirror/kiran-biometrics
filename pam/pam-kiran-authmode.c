@@ -72,6 +72,46 @@ data_cleanup (pam_handle_t *pamh, void *data, int error_status)
     g_free (data);
 }
 
+static char *
+get_auth_item (KiranAccountsUser *user,
+	       pam_handle_t *pamh,
+	       int mod)
+{
+    GError *error;
+    gchar *auth_items = NULL;
+    gchar *auth = NULL;
+    int ret;
+    
+    error = NULL;
+    ret = kiran_accounts_user_call_get_auth_items_sync (user,
+    					            mod,
+    						    &auth_items,
+    						    NULL,
+    						    &error);
+    if (!ret || !auth_items)
+    {
+        D(pamh, "Error with getting the finger auth item: %s", error->message);
+        g_error_free (error);
+        auth = g_strdup (NEED_DATA);
+    }
+    else
+    {
+        char *id;
+        id = parser_auth_items_json_data (pamh, auth_items);
+        if (id)
+        {
+            auth = id;
+            D(pamh, "Error with getting the finger auth id: %s", id);
+        }
+        else
+        {
+            auth = g_strdup (NEED_DATA);
+        }
+    }
+
+    return auth;
+}
+
 static void
 do_authmode_set(pam_handle_t *pamh, const char *username)
 {
@@ -146,36 +186,7 @@ do_authmode_set(pam_handle_t *pamh, const char *username)
 
     //指纹认证
     if (authmode & ACCOUNTS_AUTH_MODE_FINGERPRINT)
-    {
-	gchar *auth_items = NULL;
-
-	error = NULL;
-	ret = kiran_accounts_user_call_get_auth_items_sync (user,
-						            ACCOUNTS_AUTH_MODE_FINGERPRINT,
-							    &auth_items,
-							    NULL,
-							    &error);
-	if (!ret || !auth_items)
-	{
-            D(pamh, "Error with getting the finger auth item: %s", error->message);
-            g_error_free (error);
-	    auth = g_strdup (NEED_DATA);
-	}
-	else
-	{
-	    char *id;
-	    id = parser_auth_items_json_data (pamh, auth_items);
-	    if (id)
-	    {
-	        auth = id;
-            D(pamh, "Error with getting the finger auth id: %s", id);
-	    }
-	    else
-	    {
-	        auth = g_strdup (NEED_DATA);
-	    }
-	}
-    }
+	auth = get_auth_item (user, pamh, ACCOUNTS_AUTH_MODE_FINGERPRINT);
     else
 	auth = g_strdup (NOT_NEED_DATA);
     pam_set_data (pamh, FINGER_MODE, auth, data_cleanup);
@@ -190,7 +201,7 @@ do_authmode_set(pam_handle_t *pamh, const char *username)
 
     //人脸认证
     if (authmode & ACCOUNTS_AUTH_MODE_FACE)
-	auth = g_strdup (NEED_DATA);
+	auth = get_auth_item (user, pamh, ACCOUNTS_AUTH_MODE_FACE);
     else
 	auth = g_strdup (NOT_NEED_DATA);
     pam_set_data (pamh, FACE_MODE, auth, data_cleanup);

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiran-biometrics\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-22 19:41+0800\n"
+"POT-Creation-Date: 2021-03-24 11:49+0800\n"
 "PO-Revision-Date: 2020-06-28 19:05+0700\n"
 "Last-Translator: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
 "Language-Team: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
@@ -19,85 +19,93 @@ msgstr ""
 "X-Poedit-Language: Chinese\n"
 "X-Poedit-Country: CHINA\n"
 
-#: ../src/kiran-biometrics.c:181
+#: ../src/kiran-biometrics.c:184
 msgid "Successed enroll face!"
 msgstr "人脸录入成功!"
 
-#: ../src/kiran-biometrics.c:188
+#: ../src/kiran-biometrics.c:204
 msgid "Please look the camera!"
 msgstr "请看摄像头!"
 
-#: ../src/kiran-biometrics.c:381 ../src/kiran-biometrics.c:610
+#: ../src/kiran-biometrics.c:222
+msgid "Face match!"
+msgstr "人脸匹配!"
+
+#: ../src/kiran-biometrics.c:240
+msgid "Face not match! Please look the camera!"
+msgstr "人脸不匹配，请对准摄像头!"
+
+#: ../src/kiran-biometrics.c:438 ../src/kiran-biometrics.c:669
 msgid "Please place the finger!"
 msgstr "请录入指纹!"
 
-#: ../src/kiran-biometrics.c:388
+#: ../src/kiran-biometrics.c:445
 msgid "Please place the finger again!"
 msgstr "请再次录入指纹！"
 
-#: ../src/kiran-biometrics.c:414
+#: ../src/kiran-biometrics.c:473
 msgid "Please place the same finger!"
 msgstr "请使用同一个指纹录入!"
 
-#: ../src/kiran-biometrics.c:467
+#: ../src/kiran-biometrics.c:526
 msgid "Successed enroll finger!"
 msgstr "指纹录入成功!"
 
-#: ../src/kiran-biometrics.c:480
+#: ../src/kiran-biometrics.c:539
 msgid "Failed enroll finger!"
 msgstr "指纹录入失败!"
 
-#: ../src/kiran-biometrics.c:487
+#: ../src/kiran-biometrics.c:546
 msgid "Cancel fprint enroll!"
 msgstr "取消指纹录入"
 
-#: ../src/kiran-biometrics.c:516 ../src/kiran-biometrics.c:679
+#: ../src/kiran-biometrics.c:575 ../src/kiran-biometrics.c:738
 #, c-format
 msgid "Fingerprint Device Busy"
 msgstr "指纹设备忙"
 
-#: ../src/kiran-biometrics.c:535 ../src/kiran-biometrics.c:701
+#: ../src/kiran-biometrics.c:594 ../src/kiran-biometrics.c:760
 #, c-format
 msgid "Fingerprint Device Not Found"
 msgstr "未找到指纹设备"
 
-#: ../src/kiran-biometrics.c:553 ../src/kiran-biometrics.c:719
-#: ../src/kiran-biometrics.c:828
+#: ../src/kiran-biometrics.c:612 ../src/kiran-biometrics.c:778
+#: ../src/kiran-biometrics.c:887 ../src/kiran-biometrics.c:955
 #, c-format
 msgid "No Action In Progress"
 msgstr "没有对应的操作"
 
-#: ../src/kiran-biometrics.c:588
+#: ../src/kiran-biometrics.c:647
 msgid "Not Found The Id Fprint Template!"
 msgstr "该用户未录入指纹!"
 
-#: ../src/kiran-biometrics.c:630
+#: ../src/kiran-biometrics.c:689
 msgid "Fingerprint match!"
 msgstr "指纹匹配!"
 
-#: ../src/kiran-biometrics.c:638
+#: ../src/kiran-biometrics.c:697
 msgid "Fingerprint not match, place again!"
 msgstr "指纹不匹配, 请重新录入!"
 
-#: ../src/kiran-biometrics.c:650
+#: ../src/kiran-biometrics.c:709
 msgid "Cancel fprint verify!"
 msgstr "取消指纹验证!"
 
-#: ../src/kiran-biometrics.c:656
+#: ../src/kiran-biometrics.c:715
 msgid "Fingerprint over max try count!"
 msgstr "超过最大尝试次数!"
 
-#: ../src/kiran-biometrics.c:748
+#: ../src/kiran-biometrics.c:807
 #, c-format
 msgid "Internal Error"
 msgstr "内部错误"
 
-#: ../src/kiran-biometrics.c:790
+#: ../src/kiran-biometrics.c:849 ../src/kiran-biometrics.c:917
 #, c-format
 msgid "Face Device Busy"
 msgstr "人脸设备忙"
 
-#: ../src/kiran-biometrics.c:814
+#: ../src/kiran-biometrics.c:873 ../src/kiran-biometrics.c:941
 #, c-format
 msgid "Face Device Not Found"
 msgstr "未找到人脸设备"

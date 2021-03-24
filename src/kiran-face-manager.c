@@ -11,10 +11,10 @@
 
 #define FACE_CAS_FILE "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml"
 #define EYE_CAS_FILE "/usr/share/OpenCV/haarcascades/haarcascade_eye_tree_eyeglasses.xml"
-#define DEFAULT_ZMQ_ADDR "ipc://KiranFaceService.ipc"
+#define DEFAULT_ZMQ_ADDR "ipc:///tmp/KiranFaceService.ipc"
 #define ENROLL_FACE_NUM 10
 
-#define FACE_ZMQ_ADDR "tcp://10.20.1.15:6845"
+#define FACE_ZMQ_ADDR "ipc:///tmp/KiranFaceCompareService.ipc"
 
 struct _KiranFaceManagerPrivate
 {
@@ -371,10 +371,13 @@ face_compare (KiranFaceManager *manager,
     ret = zmq_send (priv->client, (unsigned char*)compare, total_len, ZMQ_DONTWAIT);
     g_message ("send to face compare service[%x, %d, %d, %d, %d] %d\n", channel, compare->type, width1, height1, len1, ret);
 
-    zmq_recv(priv->client, result, 2, 0);
-    if(result[0] == COMPARE_RESULT_TYPE && result[1] == FACE_MATCH )
+    if (ret > 0)
     {
-   	ret = FACE_RESULT_OK;
+        zmq_recv(priv->client, result, 2, 0);
+        if(result[0] == COMPARE_RESULT_TYPE && result[1] == FACE_MATCH )
+        {
+   	    ret = FACE_RESULT_OK;
+        }
     }
 
     g_bytes_unref (bytes1);
@@ -523,6 +526,7 @@ kiran_face_manager_init (KiranFaceManager *self)
     KiranFaceManagerPrivate *priv;
     GError *error;
     int ret = 0;
+    int timeout = 30000;
 
     priv = self->priv = KIRAN_FACE_MANAGER_GET_PRIVATE (self);
     priv->camera = NULL;
@@ -577,6 +581,7 @@ kiran_face_manager_init (KiranFaceManager *self)
 	dzlog_debug("zmq coennt %s failed!\n", FACE_ZMQ_ADDR);
 	g_message ("zmq connect  %s failed!\n", FACE_ZMQ_ADDR);
     }
+    zmq_setsockopt (priv->client, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
 
     priv->id = NULL;
 }
