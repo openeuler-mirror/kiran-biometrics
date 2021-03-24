@@ -118,6 +118,12 @@ kiran_face_manager_class_init (KiranFaceManagerClass *class)
 }
 
 static void
+free_data (void *data, void *hint)
+{
+    g_free (data);
+}
+
+static void
 send_faces_axis (KiranFaceManager *manager, 
 		 GList *faces)
 {
@@ -131,6 +137,7 @@ send_faces_axis (KiranFaceManager *manager,
     struct face_axis *axis;
     int ret;
     gsize total_len;
+    zmq_msg_t msg;
 
     array = json_array_new ();
     generator = json_generator_new();
@@ -187,13 +194,15 @@ send_faces_axis (KiranFaceManager *manager,
     axis->len = len;
     g_strlcpy (axis->content, data, len);
 
-    ret = zmq_send (priv->service, (unsigned char*)axis, total_len, ZMQ_DONTWAIT);
+    zmq_msg_init_data (&msg, (unsigned char*)axis, total_len, free_data, NULL);
+    //ret = zmq_send (priv->service, (unsigned char*)axis, total_len, ZMQ_DONTWAIT);
+    ret = zmq_msg_send(&msg, priv->service, 0);
 
     dzlog_debug ("send face json data: %s--------(%d)\n", data, ret);
 
+    zmq_msg_close (&msg);
     json_array_unref (array);
     g_object_unref (generator);
-    g_free (axis);
 }
 
 static gpointer
@@ -621,6 +630,7 @@ send_image_data (KiranFaceManager *kfamanager,
     gsize total_len;
     int channel;
     int ret;
+    zmq_msg_t msg;
 
     width = gcv_matrix_get_n_columns (GCV_MATRIX(image));
     height = gcv_matrix_get_n_rows (GCV_MATRIX(image));
@@ -638,10 +648,12 @@ send_image_data (KiranFaceManager *kfamanager,
     fimg->len = len;
     memcpy (fimg->content, data, len);
 
-    ret = zmq_send (priv->service, (unsigned char*)fimg, total_len, ZMQ_DONTWAIT);
+    zmq_msg_init_data (&msg, (unsigned char*)fimg, total_len, free_data, NULL);
+//    ret = zmq_send (priv->service, (unsigned char*)fimg, total_len, ZMQ_DONTWAIT);
+    ret = zmq_msg_send(&msg, priv->service, 0);
 
-    g_free (fimg);
     g_bytes_unref (bytes);
+    zmq_msg_close (&msg);
 
     return ret;
 }
