@@ -123,6 +123,58 @@ free_data (void *data, void *hint)
     g_free (data);
 }
 
+static int
+zmq_msg_send_axis_with_json (KiranFaceManager *manager,
+		             struct face_axis *axis)
+{
+    KiranFaceManagerPrivate *priv = manager->priv;
+    JsonObject *object;
+    JsonNode *node;
+    JsonNode *root;
+    JsonGenerator *generator;
+    zmq_msg_t msg;
+    gsize len;
+    gchar *data;
+    int ret;
+
+    generator = json_generator_new();
+    root = json_node_new (JSON_NODE_OBJECT);
+    object = json_object_new ();
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_int (node, axis->type);
+    json_object_set_member (object,
+                            "type",
+                             node);
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_int (node, axis->len);
+    json_object_set_member (object,
+                            "len",
+                             node);
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_string (node, axis->content);
+    json_object_set_member (object,
+                            "content",
+                             node);
+
+    json_node_init_object (root, object);
+    json_generator_set_root (generator, root);
+
+    data = json_generator_to_data (generator, &len);
+
+    zmq_msg_init_data (&msg, (unsigned char*)data, len, free_data, NULL);
+
+    ret = zmq_msg_send(&msg, priv->service, 0);
+
+    zmq_msg_close (&msg);
+
+    g_object_unref (generator);
+
+    return ret;
+}
+
 static void
 send_faces_axis (KiranFaceManager *manager, 
 		 GList *faces)
@@ -137,7 +189,6 @@ send_faces_axis (KiranFaceManager *manager,
     struct face_axis *axis;
     int ret;
     gsize total_len;
-    zmq_msg_t msg;
 
     array = json_array_new ();
     generator = json_generator_new();
@@ -194,15 +245,14 @@ send_faces_axis (KiranFaceManager *manager,
     axis->len = len;
     g_strlcpy (axis->content, data, len);
 
-    zmq_msg_init_data (&msg, (unsigned char*)axis, total_len, free_data, NULL);
-    //ret = zmq_send (priv->service, (unsigned char*)axis, total_len, ZMQ_DONTWAIT);
-    ret = zmq_msg_send(&msg, priv->service, 0);
+    ret = zmq_msg_send_axis_with_json(manager, axis);
 
     dzlog_debug ("send face json data: %s--------(%d)\n", data, ret);
 
-    zmq_msg_close (&msg);
+    g_free (data);
     json_array_unref (array);
     g_object_unref (generator);
+    g_free (axis);
 }
 
 static gpointer
@@ -618,6 +668,76 @@ kiran_face_manager_start (KiranFaceManager *kfamanager)
     return FACE_RESULT_OK;
 }
 
+static int
+zmq_msg_send_face_image_with_json (KiranFaceManager *kfamanager,
+		                   struct face_image *fimg)
+{
+    KiranFaceManagerPrivate *priv = kfamanager->priv;
+    JsonObject *object;
+    JsonNode *node;
+    JsonNode *root;
+    JsonGenerator *generator;
+    zmq_msg_t msg;
+    gsize len;
+    gchar *data;
+    int ret;
+
+    generator = json_generator_new();
+    root = json_node_new (JSON_NODE_OBJECT);
+    object = json_object_new ();
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_int (node, fimg->type);
+    json_object_set_member (object,
+                            "type",
+                             node);
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_int (node, fimg->channel);
+    json_object_set_member (object,
+                            "channel",
+                             node);
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_int (node, fimg->width);
+    json_object_set_member (object,
+		            "width",
+                            node);
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_int (node, fimg->height);
+    json_object_set_member (object,
+		            "height",
+                            node);
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_int (node, fimg->len);
+    json_object_set_member (object,
+		            "len",
+                            node);
+
+    node = json_node_new (JSON_NODE_VALUE);
+    json_node_init_string (node, fimg->content);
+    json_object_set_member (object,
+		            "content",
+                            node);
+
+    json_node_init_object (root, object);
+    json_generator_set_root (generator, root); 
+
+    data = json_generator_to_data (generator, &len);
+
+    zmq_msg_init_data (&msg, (unsigned char*)data, len, free_data, NULL);
+
+    ret = zmq_msg_send(&msg, priv->service, 0);
+
+    zmq_msg_close (&msg);
+    
+    g_object_unref (generator);
+
+    return ret;
+}
+
 static int 
 send_image_data (KiranFaceManager *kfamanager,
 		GCVImage *image)
@@ -632,7 +752,6 @@ send_image_data (KiranFaceManager *kfamanager,
     gsize total_len;
     int channel;
     int ret;
-    zmq_msg_t msg;
 
     width = gcv_matrix_get_n_columns (GCV_MATRIX(image));
     height = gcv_matrix_get_n_rows (GCV_MATRIX(image));
@@ -650,12 +769,10 @@ send_image_data (KiranFaceManager *kfamanager,
     fimg->len = len;
     memcpy (fimg->content, data, len);
 
-    zmq_msg_init_data (&msg, (unsigned char*)fimg, total_len, free_data, NULL);
-//    ret = zmq_send (priv->service, (unsigned char*)fimg, total_len, ZMQ_DONTWAIT);
-    ret = zmq_msg_send(&msg, priv->service, 0);
+    ret = zmq_msg_send_face_image_with_json (kfamanager, fimg);
 
     g_bytes_unref (bytes);
-    zmq_msg_close (&msg);
+    g_free (fimg);
 
     return ret;
 }
