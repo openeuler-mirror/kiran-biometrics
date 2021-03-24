@@ -11,7 +11,7 @@
 
 #define FACE_CAS_FILE "/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml"
 #define EYE_CAS_FILE "/usr/share/OpenCV/haarcascades/haarcascade_eye_tree_eyeglasses.xml"
-#define DEFAULT_ZMQ_ADDR "ipc:///tmp/KiranFaceService.ipc"
+#define DEFAULT_ZMQ_ADDR "/tmp/KiranFaceService.ipc"
 #define ENROLL_FACE_NUM 10
 
 #define FACE_ZMQ_ADDR "ipc:///tmp/KiranFaceCompareService.ipc"
@@ -574,7 +574,7 @@ kiran_face_manager_init (KiranFaceManager *self)
                                       do_face_handle,
                                       self);
 
-    priv->addr = g_strdup (DEFAULT_ZMQ_ADDR);
+    priv->addr = g_strdup_printf ("ipc://%s", DEFAULT_ZMQ_ADDR);
     priv->ctx = zmq_ctx_new();
     priv->service = zmq_socket (priv->ctx, ZMQ_PUB);
     ret = zmq_bind (priv->service,  priv->addr);
@@ -582,6 +582,8 @@ kiran_face_manager_init (KiranFaceManager *self)
     {
 	dzlog_debug("zmq bind  %s failed!\n", priv->addr);
     }
+
+    chmod (DEFAULT_ZMQ_ADDR, 0666); //修改权限使得普通用户可以读
 
     priv->client = zmq_socket (priv->ctx, ZMQ_REQ);
     ret = zmq_connect (priv->client, FACE_ZMQ_ADDR);
