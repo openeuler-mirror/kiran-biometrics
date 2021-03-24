@@ -680,6 +680,7 @@ zmq_msg_send_face_image_with_json (KiranFaceManager *kfamanager,
     zmq_msg_t msg;
     gsize len;
     gchar *data;
+    gchar *img_data; //图片数据
     int ret;
 
     generator = json_generator_new();
@@ -716,8 +717,9 @@ zmq_msg_send_face_image_with_json (KiranFaceManager *kfamanager,
 		            "len",
                             node);
 
+    img_data = g_base64_encode (fimg->content, fimg->len);
     node = json_node_new (JSON_NODE_VALUE);
-    json_node_init_string (node, fimg->content);
+    json_node_init_string (node, img_data);
     json_object_set_member (object,
 		            "content",
                             node);
@@ -733,6 +735,7 @@ zmq_msg_send_face_image_with_json (KiranFaceManager *kfamanager,
 
     zmq_msg_close (&msg);
     
+    g_free (img_data);
     g_object_unref (generator);
 
     return ret;
