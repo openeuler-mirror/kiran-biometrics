@@ -876,6 +876,25 @@ kiran_face_manager_get_addr (KiranFaceManager *kfamanager)
     return priv->addr;
 }
 
+int 
+kiran_face_manager_delete (const gchar *id)
+{
+    gchar *path;
+    int ret;
+
+    path = g_strdup_printf ("%s/%s", FACE_DIR, id);
+    if (!g_file_test (path, G_FILE_TEST_EXISTS))
+    {
+        g_free (path);
+        return -1;
+    }
+
+    ret = g_rmdir (path);
+    g_free(path);
+
+    return ret;
+}
+
 KiranFaceManager *
 kiran_face_manager_new ()
 {

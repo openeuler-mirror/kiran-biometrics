@@ -975,6 +975,19 @@ kiran_biometrics_delete_enrolled_face (KiranBiometrics *kirBiometrics,
 				       const char *id,
 				       DBusGMethodInvocation *context)
 {
+    KiranBiometricsPrivate *priv = kirBiometrics->priv;
+
+    g_autoptr(GError) error = NULL;
+    int ret;
+
+    ret = kiran_face_manager_delete (id);
+    if (ret != FACE_RESULT_OK)
+    {
+        g_set_error (&error, FACE_ERROR,
+                     FACE_ERROR_INTERNAL, _("Internal Error"));
+        dbus_g_method_return_error (context, error);
+    }
+
     dbus_g_method_return(context);
 }
 

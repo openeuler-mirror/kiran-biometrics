@@ -42,5 +42,6 @@ int kiran_face_manager_do_enroll (KiranFaceManager *kfamanager);
 int kiran_face_manager_do_verify (KiranFaceManager *kfamanager,
 		                  const gchar *id);
 char *kiran_face_manager_get_addr (KiranFaceManager *kfamanager);
+int kiran_face_manager_delete (const gchar *id);
 
 #endif /* __KIRAN_FACE_MANAGER_H__ */
