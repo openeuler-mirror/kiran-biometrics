@@ -182,7 +182,7 @@ face_enroll_status_cb (KiranBiometrics *kirBiometrics,
     {
          g_signal_emit(kirBiometrics,
                           signals[SIGNAL_FACE_ENROLL_STATUS], 0,
-                          _("Successed enroll face!"), "", progress,
+                          _("Successed enroll face!"), id, progress,
                           TRUE);
 
 
