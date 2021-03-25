@@ -132,6 +132,7 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 
     g_type_class_add_private (klass, sizeof (KiranBiometricsPrivate));
     dbus_g_error_domain_register (FPRINT_ERROR, FPRINT_ERROR_DBUS_INTERFACE, FPRINT_TYPE_ERROR);
+    dbus_g_error_domain_register (FACE_ERROR, FACE_ERROR_DBUS_INTERFACE, FACE_TYPE_ERROR);
 
     signals[SIGNAL_FPRINT_VERIFY_STATUS] = 
 	                g_signal_new ("verify-fprint-status",
