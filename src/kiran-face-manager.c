@@ -834,14 +834,18 @@ kiran_face_manager_capture_face (KiranFaceManager *kfamanager)
     image = gcv_video_capture_read (GCV_VIDEO_CAPTURE(priv->camera));
     if (image)
     {
-	ret = send_image_data (kfamanager, image);
+	GCVImage *area_img = face_area_image (image);
+
+	ret = send_image_data (kfamanager, area_img);
 	if (g_mutex_trylock (&priv->mutex))
 	{
 	    //使用该图像进行检测人脸
-	    priv->detect_image = face_area_image (image);
+	    priv->detect_image = area_img;
 	    g_cond_signal (&priv->cond);
 	    g_mutex_unlock (&priv->mutex);
 	}
+	else
+	   g_object_unref (area_img);
         
 	g_object_unref (image);
     }
