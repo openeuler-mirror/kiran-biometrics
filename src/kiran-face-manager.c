@@ -3,7 +3,6 @@
 #include <zmq.h>
 #include <zlog_ex.h>
 #include <json-glib/json-glib.h>
-#include <glib/gi18n.h>
 
 #include "config.h"
 #include "kiran-biometrics-types.h"
@@ -124,7 +123,7 @@ kiran_face_manager_class_init (KiranFaceManagerClass *class)
                                        G_SIGNAL_RUN_LAST,
                                        0,
                                        NULL, NULL, NULL,
-                                       G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
+                                       G_TYPE_NONE, 3, G_TYPE_INT,G_TYPE_STRING, G_TYPE_INT);
 }
 
 static void
@@ -538,13 +537,13 @@ do_face_handle (gpointer data)
 	    {
     		g_signal_emit(manager,
                               signals[SIGNAL_FACE_ENROLL_STATUS], 0,
-                              _("Please stay from the camera!"), priv->enroll_face_count * 10);
+                              1, "", priv->enroll_face_count * 10);
 	    }
 	    else if (ret == FACE_SMALL)
 	    {
     		g_signal_emit(manager,
                               signals[SIGNAL_FACE_ENROLL_STATUS], 0,
-                              _("Please get closer to the camera!"), priv->enroll_face_count * 10);
+                              -1, "", priv->enroll_face_count * 10);
 	    }
 
 	    if (priv->enroll_face_count < ENROLL_FACE_NUM && ret == FACE_OK)
@@ -553,7 +552,7 @@ do_face_handle (gpointer data)
 		priv->enroll_images = g_list_append (priv->enroll_images, g_object_ref(priv->face));
     		g_signal_emit(manager,
                               signals[SIGNAL_FACE_ENROLL_STATUS], 0,
-                              "", priv->enroll_face_count * 10);
+                              0, "", priv->enroll_face_count * 10);
 	        priv->enroll_face_count++;
 	    }
 	    
@@ -569,7 +568,7 @@ do_face_handle (gpointer data)
                     //发送完成录入信号
                     g_signal_emit(manager,
                                   signals[SIGNAL_FACE_ENROLL_STATUS], 0,
-                                  id, 100);
+                                  0, id, 100);
 		}
 		else
 		{
@@ -869,7 +868,7 @@ kiran_face_manager_do_enroll (KiranFaceManager *kfamanager)
 
     g_signal_emit(kfamanager,
                   signals[SIGNAL_FACE_ENROLL_STATUS], 0,
-                  "", priv->enroll_face_count * 10);
+                  0, "", priv->enroll_face_count * 10);
 
     return FACE_RESULT_OK;
 }

@@ -168,6 +168,7 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 
 static void
 face_enroll_status_cb (KiranBiometrics *kirBiometrics,
+		gint quality,
 		gchar *id,
 		gint progress,
 		gpointer user_data)
@@ -199,9 +200,20 @@ face_enroll_status_cb (KiranBiometrics *kirBiometrics,
     }
     else
     {
+	 gchar *msg = _("Please look the camera!");
+
+	 if (quality > 0)
+	 {
+	    msg = _("Please stay from the camera!");
+	 }
+	 else if (quality < 0)
+	 {
+	    msg = _("Please get closer to the camera!");
+	 }
+
          g_signal_emit(kirBiometrics,
                           signals[SIGNAL_FACE_ENROLL_STATUS], 0,
-                          _("Please look the camera!"), "", progress,
+                          msg, "", progress,
                           FALSE);
     }
 }
