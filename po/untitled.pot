@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-24 11:49+0800\n"
+"POT-Creation-Date: 2021-03-25 11:13+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -93,7 +93,7 @@ msgstr ""
 msgid "Fingerprint over max try count!"
 msgstr ""
 
-#: ../src/kiran-biometrics.c:807
+#: ../src/kiran-biometrics.c:807 ../src/kiran-biometrics.c:987
 #, c-format
 msgid "Internal Error"
 msgstr ""
@@ -106,4 +106,12 @@ msgstr ""
 #: ../src/kiran-biometrics.c:873 ../src/kiran-biometrics.c:941
 #, c-format
 msgid "Face Device Not Found"
+msgstr ""
+
+#: ../src/kiran-face-manager.c:541
+msgid "Please stay from the camera!"
+msgstr ""
+
+#: ../src/kiran-face-manager.c:547
+msgid "Please get closer to the camera!"
 msgstr ""

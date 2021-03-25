@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kiran-biometrics\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-24 11:49+0800\n"
+"POT-Creation-Date: 2021-03-25 11:13+0800\n"
 "PO-Revision-Date: 2020-06-28 19:05+0700\n"
 "Last-Translator: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
 "Language-Team: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
@@ -95,7 +95,7 @@ msgstr "取消指纹验证!"
 msgid "Fingerprint over max try count!"
 msgstr "超过最大尝试次数!"
 
-#: ../src/kiran-biometrics.c:807
+#: ../src/kiran-biometrics.c:807 ../src/kiran-biometrics.c:987
 #, c-format
 msgid "Internal Error"
 msgstr "内部错误"
@@ -109,3 +109,12 @@ msgstr "人脸设备忙"
 #, c-format
 msgid "Face Device Not Found"
 msgstr "未找到人脸设备"
+
+#: ../src/kiran-face-manager.c:541
+msgid "Please stay from the camera!"
+msgstr "请离摄像头远点!"
+
+#: ../src/kiran-face-manager.c:547
+#, fuzzy
+msgid "Please get closer to the camera!"
+msgstr "请离摄像头近点!"

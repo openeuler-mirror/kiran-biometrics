@@ -3,6 +3,7 @@
 #include <zmq.h>
 #include <zlog_ex.h>
 #include <json-glib/json-glib.h>
+#include <glib/gi18n.h>
 
 #include "config.h"
 #include "kiran-biometrics-types.h"
@@ -15,6 +16,15 @@
 #define ENROLL_FACE_NUM 10
 
 #define FACE_ZMQ_ADDR "ipc:///tmp/KiranFaceCompareService.ipc"
+
+#define FACE_SIZE 160
+
+enum 
+{
+    FACE_OK = 0,
+    FACE_SMALL,
+    FACE_BIG
+};
 
 struct _KiranFaceManagerPrivate
 {
@@ -491,6 +501,24 @@ face_verify (KiranFaceManager *manager)
     return ret;
 }
 
+static int
+face_quality (GCVImage *face)
+{
+    int width;
+    int big_size = FACE_SIZE + 10;
+    int small_size = FACE_SIZE - 10;
+
+    width = gcv_matrix_get_n_columns (GCV_MATRIX(face));
+
+    if ( width > big_size)
+	return FACE_BIG;
+
+    if (width < small_size)
+	return FACE_SMALL;
+
+    return FACE_OK;
+}
+
 static gpointer
 do_face_handle (gpointer data)
 {
@@ -505,7 +533,21 @@ do_face_handle (gpointer data)
 
         if (priv->do_enroll)
 	{
-	    if (priv->enroll_face_count < ENROLL_FACE_NUM)
+	    ret = face_quality (priv->face);
+	    if (ret == FACE_BIG)
+	    {
+    		g_signal_emit(manager,
+                              signals[SIGNAL_FACE_ENROLL_STATUS], 0,
+                              _("Please stay from the camera!"), priv->enroll_face_count * 10);
+	    }
+	    else if (ret == FACE_SMALL)
+	    {
+    		g_signal_emit(manager,
+                              signals[SIGNAL_FACE_ENROLL_STATUS], 0,
+                              _("Please get closer to the camera!"), priv->enroll_face_count * 10);
+	    }
+
+	    if (priv->enroll_face_count < ENROLL_FACE_NUM && ret == FACE_OK)
 	    {
 	        //采集人脸
 		priv->enroll_images = g_list_append (priv->enroll_images, g_object_ref(priv->face));
@@ -756,6 +798,30 @@ send_image_data (KiranFaceManager *kfamanager,
     return ret;
 }
 
+static GCVImage *
+face_area_image (GCVImage *image)
+{
+    GCVRectangle *rect;
+    GCVImage *img;
+    gsize x, y, width, height;
+    gsize len;
+   
+    width = gcv_matrix_get_n_columns (GCV_MATRIX(image));
+    height = gcv_matrix_get_n_rows (GCV_MATRIX(image));
+
+    len = width < height ? width : height; //取最小的边
+
+    x = (width - len) / 2;
+    y = (height - len) / 2;
+
+    rect = gcv_rectangle_new(x, y, len, len);
+    img = gcv_image_clip (image, rect);
+
+    g_object_unref (rect);
+
+    return img;
+}
+
 int 
 kiran_face_manager_capture_face (KiranFaceManager *kfamanager)
 {
@@ -773,12 +839,12 @@ kiran_face_manager_capture_face (KiranFaceManager *kfamanager)
 	if (g_mutex_trylock (&priv->mutex))
 	{
 	    //使用该图像进行检测人脸
-	    priv->detect_image = image;
+	    priv->detect_image = face_area_image (image);
 	    g_cond_signal (&priv->cond);
 	    g_mutex_unlock (&priv->mutex);
 	}
-	else
-            g_object_unref (image);
+        
+	g_object_unref (image);
     }
     else
     {
