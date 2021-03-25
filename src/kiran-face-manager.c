@@ -436,7 +436,11 @@ face_compare (KiranFaceManager *manager,
         {
    	    ret = FACE_RESULT_OK;
         }
+	else
+	    ret = FACE_RESULT_FAIL;
     }
+    else
+	ret = FACE_RESULT_FAIL;
 
     g_bytes_unref (bytes1);
     g_bytes_unref (bytes2);
