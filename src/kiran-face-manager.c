@@ -231,17 +231,17 @@ send_faces_axis (KiranFaceManager *manager,
     data = json_generator_to_data (generator, &len);
     g_object_unref (generator);
 
-    total_len = len + sizeof (unsigned int) + sizeof (unsigned char); //发送的总长度
+    total_len = len + 1 +  sizeof (unsigned int) + sizeof (unsigned char); //发送的总长度
     axis = g_malloc0 (total_len); 
     axis->type = AXIS_TYPE;
     axis->len = len;
-    g_strlcpy (axis->content, data, len);
-    g_free (data);
+    g_strlcpy (axis->content, data, len + 1);
 
     ret = zmq_msg_send_axis_with_json(manager, axis);
 
     dzlog_debug ("send face json data: %s--------(%d)\n", data, ret);
 
+    g_free (data);
     g_free (axis);
 }
 
