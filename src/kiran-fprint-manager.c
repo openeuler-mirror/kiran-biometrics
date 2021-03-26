@@ -117,28 +117,23 @@ kiran_fprint_manager_open_with_module (KiranFprintManager *kfp_manager,
     int ret;
     int i;
    
-    ret = FPRINT_RESULT_FAIL;
-    if (module->fprint_init)
-        ret =  module->fprint_init ();
+    module->fprint_init ();
 
-    if(ret == 0)
+    ret = module->fprint_get_dev_count ();
+    
+    if (ret <= 0)
+        return FPRINT_RESULT_NO_DEVICE;
+    
+    for (i = 0; i < ret; i++)
     {
-	ret = module->fprint_get_dev_count ();
-
-	if (ret <= 0)
-	    return FPRINT_RESULT_FAIL;
-	
-	for (i = 0; i < ret; i++)
-	{
-	    //默认打开一个设备
-	    module->hDevice = module->fprint_open_device(i);
-	    
-	    if (module->hDevice)
-		return 0;
-	}
+        //默认打开一个设备
+        module->hDevice = module->fprint_open_device(i);
+        
+        if (module->hDevice)
+    	    return FPRINT_RESULT_OK;
     }
 
-    return ret;
+    return FPRINT_RESULT_FAIL;
 }
 
 int 
@@ -147,7 +142,7 @@ kiran_fprint_manager_open (KiranFprintManager *kfp_manager)
     KiranFprintManagerPrivate *priv = kfp_manager->priv;
     KiranFprintModule *module;
     GList *l, *next;
-    int ret = 0;
+    int ret = FPRINT_RESULT_FAIL;
 
     module = priv->current_module;
     if (module)
@@ -178,7 +173,7 @@ kiran_fprint_manager_open (KiranFprintManager *kfp_manager)
         next = l->next;
     }
 
-    return FPRINT_RESULT_FAIL;
+    return ret;
 }
 
 int 
@@ -194,8 +189,7 @@ kiran_fprint_manager_close (KiranFprintManager *kfp_manager)
 	if (module->fprint_close_device && module->hDevice)
 	{
 	    ret = module->fprint_close_device(module->hDevice);
-	    if (ret == 0 && module->fprint_finalize)
-		ret = module->fprint_finalize();
+	    module->fprint_finalize();
 	}
     }
 

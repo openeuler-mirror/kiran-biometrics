@@ -603,8 +603,15 @@ kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics,
     }
     else
     {
+	const char *msg;
+
+	if (ret == FPRINT_RESULT_NO_DEVICE)
+	    msg = _("Fingerprint Device Not Found");
+	else
+	    msg = _("Open Fingerprint Device Fail!");
+
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_NOT_FOUND_DEVICE, _("Fingerprint Device Not Found"));
+		     FPRINT_ERROR_NOT_FOUND_DEVICE, msg);
 	dbus_g_method_return_error (context, error);
 	return;
     }
