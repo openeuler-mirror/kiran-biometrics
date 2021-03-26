@@ -938,6 +938,10 @@ kiran_biometrics_verify_face_start (KiranBiometrics *kirBiometrics,
         ret = kiran_face_manager_do_verify (priv->kfamanager, id);
         if (ret == FACE_RESULT_OK)
         {
+	    g_signal_emit(kirBiometrics,
+                          signals[SIGNAL_FACE_VERIFY_STATUS], 0,
+                          _("Looking for you face, Please look the camera!"), FALSE, FALSE);
+
             priv->face_busy = TRUE;
             priv->face_action = FACE_ACTION_VERIFY;
 
