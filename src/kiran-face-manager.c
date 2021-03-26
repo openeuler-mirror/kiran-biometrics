@@ -508,8 +508,8 @@ static int
 face_quality (GCVImage *face)
 {
     int width;
-    int big_size = FACE_SIZE + 10;
-    int small_size = FACE_SIZE - 10;
+    int big_size = FACE_SIZE + 50;
+    int small_size = FACE_SIZE - 20;
 
     width = gcv_matrix_get_n_columns (GCV_MATRIX(face));
 
@@ -938,13 +938,13 @@ kiran_face_manager_delete (const gchar *id)
     if (!g_file_test (path, G_FILE_TEST_EXISTS))
     {
         g_free (path);
-        return -1;
+        return FACE_RESULT_FAIL;
     }
 
-    ret = g_rmdir (path);
+    g_rmdir (path);
     g_free(path);
 
-    return ret;
+    return FACE_RESULT_OK;
 }
 
 KiranFaceManager *

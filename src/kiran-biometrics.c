@@ -837,7 +837,7 @@ do_face_capture (gpointer data)
 	   && ret == FACE_RESULT_OK)
     {
         ret = kiran_face_manager_capture_face (priv->kfamanager);
-	usleep(10000);
+	usleep(100000);
     }
 
     kiran_face_manager_stop (priv->kfamanager);
@@ -999,6 +999,7 @@ kiran_biometrics_delete_enrolled_face (KiranBiometrics *kirBiometrics,
         g_set_error (&error, FACE_ERROR,
                      FACE_ERROR_INTERNAL, _("Internal Error"));
         dbus_g_method_return_error (context, error);
+	return;
     }
 
     dbus_g_method_return(context);
