@@ -508,8 +508,8 @@ static int
 face_quality (GCVImage *face)
 {
     int width;
-    int big_size = FACE_SIZE + 50;
-    int small_size = FACE_SIZE - 20;
+    int big_size = FACE_SIZE + 100;
+    int small_size = FACE_SIZE - 10;
 
     width = gcv_matrix_get_n_columns (GCV_MATRIX(face));
 
@@ -583,6 +583,7 @@ do_face_handle (gpointer data)
 
 		priv->enroll_face_count = 0;
 		g_list_free_full (priv->enroll_images, g_object_unref);
+		priv->enroll_images = NULL;
 	    }
 	}
 	
