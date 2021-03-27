@@ -122,7 +122,11 @@ kiran_fprint_manager_open_with_module (KiranFprintManager *kfp_manager,
     ret = module->fprint_get_dev_count ();
     
     if (ret <= 0)
+    {
+	//没有插入设备
+	module->fprint_finalize();
         return FPRINT_RESULT_NO_DEVICE;
+    }
     
     for (i = 0; i < ret; i++)
     {
