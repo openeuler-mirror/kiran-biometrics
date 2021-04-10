@@ -1,9 +1,7 @@
 #ifndef __KIRAN_FPRINT_MODULE_H__
 #define __KIRAN_FPRINT_MODULE_H__
 
-#ifndef HANDLE
-#define HANDLE void *
-#endif
+typedef void *HANDLE;
 
 enum {
     FPRINT_RESULT_OK = 0, //成功

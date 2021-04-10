@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include "kiran-fprint-module.h"
+#include "aratek/aratek.h"
 
 #ifndef FEATURELEN
 #define FEATURELEN 1024
