@@ -30,7 +30,20 @@ add_custom_command(OUTPUT kiran-accounts-gen.c kiran-accounts-gen.h
     DEPENDS  ${PROJECT_SOURCE_DIR}/data/com.kylinsec.Kiran.SystemDaemon.Accounts.xml
 )
 
-add_library(pam_kiran_fprintd MODULE pam-kiran-fprintd.c kiran-pam.c)
+find_program(GLIB_GENMARSHAL "glib-genmarshal")
+if (NOT GLIB_GENMARSHAL)
+    message(FATAL_ERROR "glib-genmarshal program not found")
+else()
+    message("found ${GLIB_GENMARSHAL}")
+endif (NOT GLIB_GENMARSHAL)
+
+add_custom_command(OUTPUT marshal.c marshal.h
+    COMMAND ${GLIB_GENMARSHAL} --prefix=biometrics_marshal ${PROJECT_SOURCE_DIR}/data/biometrics-marshal.list --header > marshal.h
+    COMMAND ${GLIB_GENMARSHAL} --prefix=biometrics_marshal ${PROJECT_SOURCE_DIR}/data/biometrics-marshal.list --body --header > marshal.c
+    DEPENDS ${PROJECT_SOURCE_DIR}/data/biometrics-marshal.list
+)
+
+add_library(pam_kiran_fprintd MODULE pam-kiran-fprintd.c kiran-pam.c marshal.c)
 add_dependencies(pam_kiran_fprintd kiran-biometrics-proxy.h)
 set_target_properties(pam_kiran_fprintd PROPERTIES PREFIX "")
 target_link_libraries(pam_kiran_fprintd pam_misc ${GLIB2_LIBRARIES} ${GDBUS_LIBRARIES})
@@ -39,7 +52,7 @@ add_library(pam_kiran_authmode MODULE pam-kiran-authmode.c kiran-pam.c kiran-acc
 set_target_properties(pam_kiran_authmode PROPERTIES PREFIX "")
 target_link_libraries(pam_kiran_authmode pam_misc ${GLIB2_LIBRARIES} ${GDBUS_LIBRARIES} ${GLIB_JSON_LIBRARIES})
 
-add_library(pam_kiran_face MODULE pam-kiran-face.c kiran-pam.c)
+add_library(pam_kiran_face MODULE pam-kiran-face.c kiran-pam.c marshal.c)
 add_dependencies(pam_kiran_face kiran-biometrics-proxy.h)
 set_target_properties(pam_kiran_face PROPERTIES PREFIX "")
 target_link_libraries(pam_kiran_face pam_misc ${GLIB2_LIBRARIES} ${GDBUS_LIBRARIES})

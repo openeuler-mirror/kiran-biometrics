@@ -17,6 +17,8 @@
 #include "kiran-pam-msg.h"
 #include "kiran-biometrics-types.h"
 
+#include "marshal.h"
+
 typedef struct {
     char *result;
     gboolean match;
@@ -245,6 +247,10 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
 #if !GLIB_CHECK_VERSION (2, 36, 0)
     g_type_init();
 #endif
+
+    dbus_g_object_register_marshaller (biometrics_marshal_VOID__STRING_BOOLEAN_BOOLEAN,
+                                       G_TYPE_NONE, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN, G_TYPE_INVALID);
+
     pam_get_item(pamh, PAM_RHOST, (const void **)(const void*) &rhost);
 
     if (rhost != NULL &&
