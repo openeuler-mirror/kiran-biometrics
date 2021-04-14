@@ -163,7 +163,6 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 				       NULL, NULL, NULL, 
 				       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_BOOLEAN);
 
-#ifdef HAVE_KIRAN_FACE
     signals[SIGNAL_FACE_VERIFY_STATUS] = 
 	                g_signal_new ("verify-face-status",
 		    	               G_TYPE_FROM_CLASS (gobject_class), 
@@ -179,7 +178,6 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 				       0, 
 				       NULL, NULL, NULL, 
 				       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_BOOLEAN);
-#endif /* HAVE_KIRAN_FACE */
 }
 
 #ifdef HAVE_KIRAN_FACE
