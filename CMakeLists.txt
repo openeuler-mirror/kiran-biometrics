@@ -20,6 +20,10 @@ set(SERVICE_PATH "/com/kylinsec/Kiran/SystemDaemon/Biometrics")
 set(SERVICE_INTERFACE "com.kylinsec.Kiran.SystemDaemon.Biometrics")
 set(INSTALL_BINDIR ${CMAKE_INSTALL_PREFIX}/libexec)
 
+if ("${ENABLE_FACE}" STREQUAL "yes")
+    set(CMAKE_C_FLAGS "{CMAKE_C_FLAGS}" -DHAVE_KIRAN_FACE)
+endif()
+
 add_subdirectory(src)
 add_subdirectory(data)
 add_subdirectory(fprint-modules)

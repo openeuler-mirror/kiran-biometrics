@@ -12,7 +12,10 @@
 #include "kiran-biometrics.h"
 #include "kiran-fprint-manager.h"
 #include "kiran-biometrics-types.h"
+
+#ifdef HAVE_KIRAN_FACE
 #include "kiran-face-manager.h"
+#endif /* HAVE_KIRAN_FACE */
 
 #ifndef MAX_TRY_COUNT 
 #define MAX_TRY_COUNT 20               /* 最大尝试次数 */
@@ -24,18 +27,22 @@
 GQuark fprint_error_quark(void);
 GType fprint_error_get_type(void);
 
+#ifdef HAVE_KIRAN_FACE
 GQuark face_error_quark(void);
 GType face_error_get_type(void);
+#endif /* HAVE_KIRAN_FACE */
 
 #define FPRINT_TYPE_ERROR fprint_error_get_type()
 #define FPRINT_ERROR_DBUS_INTERFACE "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error"
 
 #define FPRINT_ERROR fprint_error_quark()
 
+#ifdef HAVE_KIRAN_FACE
 #define FACE_TYPE_ERROR face_error_get_type()
 #define FACE_ERROR_DBUS_INTERFACE "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error"
 
 #define FACE_ERROR face_error_quark()
+#endif /* HAVE_KIRAN_FACE */
 
 typedef enum {
         ACTION_NONE = 0,
@@ -55,11 +62,13 @@ struct _KiranBiometricsPrivate
     GThread *fprint_verify_thread;
     gchar *fprint_verify_id;
 
+#ifdef HAVE_KIRAN_FACE
     KiranFaceManager* kfamanager;
     FprintAction face_action;
     gboolean face_busy;
 
     GThread *face_capture_thread;
+#endif /* HAVE_KIRAN_FACE */
 };
 
 static void kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics, 
@@ -113,7 +122,9 @@ kiran_biometrics_finalize (GObject *object)
     priv = kiranBiometrics->priv;
 
     g_object_unref (priv->kfpmanager);
+#ifdef HAVE_KIRAN_FACE
     g_object_unref (priv->kfamanager);
+#endif /* HAVE_KIRAN_FACE */
     g_free (priv->fprint_verify_id);
 
     G_OBJECT_CLASS (kiran_biometrics_parent_class)->finalize (object);
@@ -131,8 +142,10 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
         		&dbus_glib_SystemDaemon_object_info);
 
     g_type_class_add_private (klass, sizeof (KiranBiometricsPrivate));
+#ifdef HAVE_KIRAN_FACE
     dbus_g_error_domain_register (FPRINT_ERROR, FPRINT_ERROR_DBUS_INTERFACE, FPRINT_TYPE_ERROR);
     dbus_g_error_domain_register (FACE_ERROR, FACE_ERROR_DBUS_INTERFACE, FACE_TYPE_ERROR);
+#endif /* HAVE_KIRAN_FACE */
 
     signals[SIGNAL_FPRINT_VERIFY_STATUS] = 
 	                g_signal_new ("verify-fprint-status",
@@ -150,6 +163,7 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 				       NULL, NULL, NULL, 
 				       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_BOOLEAN);
 
+#ifdef HAVE_KIRAN_FACE
     signals[SIGNAL_FACE_VERIFY_STATUS] = 
 	                g_signal_new ("verify-face-status",
 		    	               G_TYPE_FROM_CLASS (gobject_class), 
@@ -165,8 +179,10 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 				       0, 
 				       NULL, NULL, NULL, 
 				       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_BOOLEAN);
+#endif /* HAVE_KIRAN_FACE */
 }
 
+#ifdef HAVE_KIRAN_FACE
 static void
 face_enroll_status_cb (KiranBiometrics *kirBiometrics,
 		gint quality,
@@ -253,6 +269,7 @@ face_verify_status_cb (KiranBiometrics *kirBiometrics,
                           _("Face not match! Please look the camera!"), FALSE, FALSE);
     }
 }
+#endif /* HAVE_KIRAN_FACE */
 
 static void
 kiran_biometrics_init (KiranBiometrics *self)
@@ -261,16 +278,17 @@ kiran_biometrics_init (KiranBiometrics *self)
 
     priv = self->priv = KIRAN_BIOMETRICS_GET_PRIVATE (self);
     priv->fprint_busy = FALSE;
-    priv->face_busy = FALSE;
     priv->kfpmanager = kiran_fprint_manager_new ();
-    priv->kfamanager = kiran_face_manager_new ();
     priv->fp_action = ACTION_NONE;
-    priv->face_action = ACTION_NONE;
     priv->fprint_enroll_thread = NULL;
     priv->fprint_verify_thread = NULL;
     priv->fprint_verify_id = NULL;
-    priv->face_capture_thread = NULL;
 
+#ifdef HAVE_KIRAN_FACE
+    priv->face_busy = FALSE;
+    priv->kfamanager = kiran_face_manager_new ();
+    priv->face_action = ACTION_NONE;
+    priv->face_capture_thread = NULL;
     g_signal_connect_swapped (priv->kfamanager,
 		              "enroll-face-status",
 		              G_CALLBACK (face_enroll_status_cb),
@@ -280,6 +298,7 @@ kiran_biometrics_init (KiranBiometrics *self)
 		              "verify-face-status",
 		              G_CALLBACK (face_verify_status_cb),
 		              self);
+#endif /* HAVE_KIRAN_FACE */
 }
 static int
 kiran_biometrics_remove_fprint (const gchar *md5)
@@ -831,6 +850,7 @@ kiran_biometrics_delete_enrolled_finger (KiranBiometrics *kirBiometrics,
     dbus_g_method_return(context);
 }
 
+#ifdef HAVE_KIRAN_FACE
 static gpointer
 do_face_capture (gpointer data)
 {
@@ -854,11 +874,13 @@ do_face_capture (gpointer data)
 
     g_thread_exit (0);
 }
+#endif /* HAVE_KIRAN_FACE */
 
 static void 
 kiran_biometrics_enroll_face_start (KiranBiometrics *kirBiometrics, 
 				    DBusGMethodInvocation *context)
 {
+#ifdef HAVE_KIRAN_FACE
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     g_autoptr(GError) error = NULL;
     int ret;
@@ -892,12 +914,14 @@ kiran_biometrics_enroll_face_start (KiranBiometrics *kirBiometrics,
     g_set_error (&error, FACE_ERROR,
                      FACE_ERROR_NOT_FOUND_DEVICE, _("Face Device Not Found"));
     dbus_g_method_return_error (context, error);
+#endif /* HAVE_KIRAN_FACE */
 }
 
 static void 
 kiran_biometrics_enroll_face_stop (KiranBiometrics *kirBiometrics, 
 			           DBusGMethodInvocation *context)
 {
+#ifdef HAVE_KIRAN_FACE
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     g_autoptr(GError) error = NULL;
 
@@ -920,6 +944,7 @@ kiran_biometrics_enroll_face_stop (KiranBiometrics *kirBiometrics,
     priv->face_busy = FALSE;
 
     dbus_g_method_return(context);
+#endif /* HAVE_KIRAN_FACE */
 }
 
 static void 
@@ -927,6 +952,7 @@ kiran_biometrics_verify_face_start (KiranBiometrics *kirBiometrics,
 				    const char *id,
 				    DBusGMethodInvocation *context)
 {
+#ifdef HAVE_KIRAN_FACE
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     g_autoptr(GError) error = NULL;
     int ret;
@@ -964,12 +990,14 @@ kiran_biometrics_verify_face_start (KiranBiometrics *kirBiometrics,
     g_set_error (&error, FACE_ERROR,
                      FACE_ERROR_NOT_FOUND_DEVICE, _("Face Device Not Found"));
     dbus_g_method_return_error (context, error);
+#endif /* HAVE_KIRAN_FACE */
 }
 
 static void 
 kiran_biometrics_verify_face_stop (KiranBiometrics *kirBiometrics, 
 			           DBusGMethodInvocation *context)
 {
+#ifdef HAVE_KIRAN_FACE
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
     g_autoptr(GError) error = NULL;
 
@@ -992,6 +1020,7 @@ kiran_biometrics_verify_face_stop (KiranBiometrics *kirBiometrics,
     priv->face_busy = FALSE;
 
     dbus_g_method_return(context);
+#endif /* HAVE_KIRAN_FACE */
 }
 
 static void 
@@ -999,6 +1028,7 @@ kiran_biometrics_delete_enrolled_face (KiranBiometrics *kirBiometrics,
 				       const char *id,
 				       DBusGMethodInvocation *context)
 {
+#ifdef HAVE_KIRAN_FACE
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
 
     g_autoptr(GError) error = NULL;
@@ -1014,6 +1044,7 @@ kiran_biometrics_delete_enrolled_face (KiranBiometrics *kirBiometrics,
     }
 
     dbus_g_method_return(context);
+#endif /* HAVE_KIRAN_FACE */
 }
 
 GQuark fprint_error_quark(void)
@@ -1024,6 +1055,7 @@ GQuark fprint_error_quark(void)
     return quark;
 }
 
+#ifdef HAVE_KIRAN_FACE
 GQuark face_error_quark(void)
 {
     static GQuark quark = 0;
@@ -1031,6 +1063,7 @@ GQuark face_error_quark(void)
             quark = g_quark_from_static_string("kiran-face-error-quark");
     return quark;
 }
+#endif /* HAVE_KIRAN_FACE */
 
 #define ENUM_ENTRY(NAME, DESC) { NAME, "" #NAME "", DESC }
 GType
@@ -1054,6 +1087,7 @@ fprint_error_get_type (void)
     return etype;
 }
 
+#ifdef HAVE_KIRAN_FACE
 GType
 face_error_get_type (void)
 {
@@ -1074,6 +1108,7 @@ face_error_get_type (void)
     }
     return etype;
 }
+#endif /* HAVE_KIRAN_FACE */
 
 KiranBiometrics *
 kiran_biometrics_new()
