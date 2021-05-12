@@ -4,6 +4,7 @@
 typedef void *HANDLE;
 
 enum {
+    FPRINT_RESULT_UNSUPPORT = -1, //此接口不支持
     FPRINT_RESULT_OK = 0, //成功
     FPRINT_RESULT_FAIL = 1, //失败
     FPRINT_RESULT_TIMEOUT = 2, //超时
@@ -93,6 +94,32 @@ HANDLE kiran_fprint_open_device (int index);
 int kiran_fprint_acquire_finger_print (HANDLE hDevice,
 			    	       unsigned char **fpTemplate,
 				       unsigned int *cbTemplate,
+				       unsigned int timeout);
+
+/*
+ * [功能]
+ * 指纹比对, 此函数直接调用指纹接口内部获取指纹进行比对
+ *
+ * [参数]
+ * hDevice
+ *       设备操作实例句柄
+ * fpTemplate [in]
+ *       指向指纹模板地址
+ *
+ * cbTemplate [in]
+ *       指纹模板数据大小
+ *
+ * timeout
+ * 超时时间, 单位为毫秒
+ *
+ * [返回值]
+ * 0 表示匹配
+ * -1 表示不支持
+ * 其它表示失败
+ */
+int kiran_fprint_verify_finger_print (HANDLE hDevice,
+			    	       unsigned char *fpTemplate,
+				       unsigned int cbTemplate,
 				       unsigned int timeout);
 
 /*

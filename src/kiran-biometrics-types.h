@@ -23,6 +23,7 @@ typedef enum {
 } FaceError;
 
 typedef enum {
+    FPRINT_RESULT_UNSUPPORT = -1, //此接口不支持
     FPRINT_RESULT_OK = 0, //成功
     FPRINT_RESULT_FAIL = 1, //失败
     FPRINT_RESULT_TIMEOUT = 2, //超时

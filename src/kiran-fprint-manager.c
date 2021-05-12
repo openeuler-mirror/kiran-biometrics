@@ -223,6 +223,28 @@ kiran_fprint_manager_acquire_finger_print (KiranFprintManager *kfp_manager,
 }
 
 int 
+kiran_fprint_manager_verify_finger_print (KiranFprintManager *kfp_manager,
+		                          unsigned char *fpTemplate,
+                                          unsigned int cbTemplate,
+					  unsigned int timeout)
+{
+    KiranFprintManagerPrivate *priv = kfp_manager->priv;
+    KiranFprintModule *module;
+
+    module = priv->current_module;
+    if(module)
+    {
+	if (module->fprint_verify_finger_print && module->hDevice)
+	    return module->fprint_verify_finger_print (module->hDevice,
+			    			       fpTemplate, 
+						       cbTemplate,
+						       timeout);
+    }
+
+    return FPRINT_RESULT_FAIL;
+}
+
+int 
 kiran_fprint_manager_template_merge (KiranFprintManager *kfp_manager,
 		                     unsigned char *fpTemplate1,
                                      unsigned char *fpTemplate2,

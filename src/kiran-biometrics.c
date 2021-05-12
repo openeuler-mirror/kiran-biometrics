@@ -495,6 +495,13 @@ do_finger_enroll (gpointer data)
             					       templateLens[i]);
             
                 dzlog_debug ("kiran_fprint_manager_template_match ret is %d\n", ret);
+                if (ret == FPRINT_RESULT_UNSUPPORT)//不支持指纹比对
+                {
+                     ret = kiran_fprint_manager_verify_finger_print (priv->kfpmanager,
+                                                                     templates[0],
+                                                                     templateLens[0],
+                                                                     DEFAULT_TIME_OUT);
+                }
             
                 if (ret != FPRINT_RESULT_OK)
                 {
@@ -534,6 +541,15 @@ do_finger_enroll (gpointer data)
     					           &regTemplate,
     					           &length);
         dzlog_debug ("kiran_fprint_manager_template_merge ret is %d, len is %d\n", ret, length);
+        if (ret == FPRINT_RESULT_UNSUPPORT)
+        { 
+            length = templateLens[0];
+            regTemplate = (unsigned char *)malloc(length);
+            if (regTemplate != NULL)
+                memcpy (regTemplate, templates[0], length);
+
+	    ret = FPRINT_RESULT_OK;
+        }
     }
     
     if (ret == FPRINT_RESULT_OK)
@@ -543,6 +559,14 @@ do_finger_enroll (gpointer data)
                                                            templateLens[0],
                                                            regTemplate,
                                                            length);
+
+        if (ret == FPRINT_RESULT_UNSUPPORT)//不支持指纹比对
+        {
+            ret = kiran_fprint_manager_verify_finger_print (priv->kfpmanager,
+                                                            regTemplate,
+                                                            length,
+                                                            DEFAULT_TIME_OUT);
+        }
         
         if (ret == FPRINT_RESULT_OK)
         {
@@ -706,33 +730,45 @@ do_finger_verify (gpointer data)
                       _("Please place the finger!"), FALSE, FALSE);
 	}
 
-        ret = kiran_fprint_manager_acquire_finger_print (priv->kfpmanager,
-                                                         &template,
-                                                         &templateLen,
-                                                         DEFAULT_TIME_OUT);
-        dzlog_debug ("kiran_fprint_manager_acquire_finger_print ret is %d, len %d\n", ret, templateLen);
-        if (ret == FPRINT_RESULT_OK)
+        //调用指纹内部接口进行比对
+        ret = kiran_fprint_manager_verify_finger_print (priv->kfpmanager,
+                                                        saveTemplate,
+                                                        saveTemplateLen,
+                                                        DEFAULT_TIME_OUT);
+
+        dzlog_debug ("kiran_fprint_verify_acquire_finger_print ret is %d\n", ret);
+        if (ret == FPRINT_RESULT_UNSUPPORT) //指纹内部认证接口不支持， 调用其它接口认证
         {
-            ret = kiran_fprint_manager_template_match (priv->kfpmanager,
-                                                               template,
-                                                               templateLen,
-                                                               saveTemplate,
-                                                               saveTemplateLen);
-            dzlog_debug ("kiran_fprint_manager_template_match ret is %d\n", ret);
+            ret = kiran_fprint_manager_acquire_finger_print (priv->kfpmanager,
+                                                             &template,
+                                                             &templateLen,
+                                                             DEFAULT_TIME_OUT);
+            dzlog_debug ("kiran_fprint_manager_acquire_finger_print ret is %d, len %d\n", ret, templateLen);
+
             if (ret == FPRINT_RESULT_OK)
             {
-                g_signal_emit(kirBiometrics, 
-                  	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                              _("Fingerprint match!"), TRUE, TRUE);
-                //指纹匹配
-                break;
+                ret = kiran_fprint_manager_template_match (priv->kfpmanager,
+                                                                   template,
+                                                                   templateLen,
+                                                                   saveTemplate,
+                                                                   saveTemplateLen);
+                dzlog_debug ("kiran_fprint_manager_template_match ret is %d\n", ret);
             }
-            else
-            {
-                g_signal_emit(kirBiometrics, 
-                  	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                              _("Fingerprint not match, place again!"), FALSE, TRUE);
-            }
+        }
+
+        if (ret == FPRINT_RESULT_OK)
+        {
+            g_signal_emit(kirBiometrics, 
+              	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
+                          _("Fingerprint match!"), TRUE, TRUE);
+            //指纹匹配
+            break;
+        }
+        else
+        {
+            g_signal_emit(kirBiometrics, 
+              	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
+                          _("Fingerprint not match, place again!"), FALSE, TRUE);
         }
     }
 

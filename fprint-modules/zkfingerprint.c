@@ -242,3 +242,11 @@ int kiran_fprint_template_match (HANDLE hDevice,
 
     return score > 0 ? FPRINT_RESULT_OK : FPRINT_RESULT_FAIL;
 }
+
+int kiran_fprint_verify_finger_print (HANDLE hDevice,
+                                      unsigned char *fpTemplate,
+                                      unsigned int cbTemplate,
+                                      unsigned int timeout)
+{
+    return FPRINT_RESULT_UNSUPPORT;
+}

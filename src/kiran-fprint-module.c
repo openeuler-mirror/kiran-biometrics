@@ -41,6 +41,9 @@ kiran_fprint_module_load (GTypeModule *gmodule)
 			  "kiran_fprint_acquire_finger_print",
 			   (gpointer *)&module->fprint_acquire_finger_print) ||
         !g_module_symbol (module->library, 
+			  "kiran_fprint_verify_finger_print",
+			   (gpointer *)&module->fprint_verify_finger_print) ||
+        !g_module_symbol (module->library, 
 			  "kiran_fprint_close_device",
 			   (gpointer *)&module->fprint_close_device) ||
         !g_module_symbol (module->library, 
@@ -74,6 +77,7 @@ kiran_fprint_module_unload (GTypeModule *gmodule)
     module->fprint_finalize = NULL;
     module->fprint_get_dev_count = NULL;
     module->fprint_acquire_finger_print = NULL;
+    module->fprint_verify_finger_print = NULL;
     module->fprint_open_device = NULL;
     module->fprint_close_device = NULL;
     module->fprint_template_merge = NULL;
