@@ -20,7 +20,7 @@ int main (int argc, char **argv)
     DBusGProxy *driver_proxy;
     guint request_name_ret;
 
-    if (dzlog_init_ex (NULL, "kylinsec-system-app", "kiran-biometrics", "kiran_biometrics_manager") < 0)
+    if (dzlog_init_ex (NULL, "kylinsec-system", "kiran-biometrics", "kiran_biometrics_manager") < 0)
 	return -1;
 
     setlocale(LC_ALL, "");
