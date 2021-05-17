@@ -22,8 +22,6 @@
 #endif
 
 #define DEFAULT_TIME_OUT 5000          /* 一次等待指纹时间，单位毫秒*/
-#define MAX_FPRINT_TEMPLATE  10240     /* 最大指纹模板长度 */
-
 #define BUFFER_SIZE 1024
 
 GQuark fprint_error_quark(void);
@@ -320,55 +318,44 @@ kiran_biometrics_remove_fprint (const gchar *md5)
 }
 
 static int
-kiran_biometrics_get_fprint (unsigned char *template,
+kiran_biometrics_get_fprint (unsigned char **template,
 		             unsigned int  *length,
 			     const gchar *md5)
 {
-    GFile *file;
-    GFileInputStream *input_stream;
     GError *error = NULL;
     gint ret = 0;
     gchar *path;
     gsize read_size;
+    gboolean result;
+    gchar *save_md5 = NULL;
 
     path = g_strdup_printf ("%s/%s.bat", FPRINT_DIR, md5);
-    if (!g_file_test (path, G_FILE_TEST_EXISTS))
+
+    result = g_file_get_contents(path,
+                                 (gchar **)template,
+                                 (gsize *)length,
+                                 &error);
+
+    if (!result)
     {
-	g_free (path);
-	return -1;
+        dzlog_debug ("get file %s failed:", path, error->message);
+        g_error_free (error);
+        ret = -1; 
     }
 
-    file = g_file_new_for_path (path);
-    input_stream = g_file_read (file, 
-				NULL,
-				&error);
+    save_md5 = g_compute_checksum_for_string (G_CHECKSUM_MD5,
+                                              *template,
+                                              *length);
 
-    if (error)
+    if (g_strcmp0(md5, save_md5))
     {
-	ret = -1;
-	g_warning("open file io stream fail: %s", error->message);
-	g_error_free (error);
-    }
-    else
-    {
-	g_input_stream_read_all (G_INPUT_STREAM (input_stream),
-			         template,
-				 *length,
-				 &read_size,
-				 NULL,
-				 &error);
-	if (error)
-	{
-	    ret = -1;
-	    g_warning("read file fail: %s", error->message);
-	    g_error_free (error);
-	}
-	*length = read_size;
+        //md5发生变化时， 返回错误
+        g_free (*template);
+        *template = NULL;
+        ret = -1; 
     }
 
     g_free(path);
-    g_object_unref (input_stream);
-    g_object_unref (file);
     
     return ret;
 }
@@ -724,14 +711,14 @@ do_finger_verify (gpointer data)
 {
     KiranBiometrics *kirBiometrics = KIRAN_BIOMETRICS (data);
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
-    unsigned char saveTemplate[MAX_FPRINT_TEMPLATE] = {0};
-    unsigned int saveTemplateLen = MAX_FPRINT_TEMPLATE;
+    unsigned char *saveTemplate = NULL;
+    unsigned int saveTemplateLen = 0;
     unsigned char *template;
     unsigned int templateLen;
     int i = 0;
     int ret = 0;
 
-    ret = kiran_biometrics_get_fprint (saveTemplate, &saveTemplateLen, priv->fprint_verify_id);
+    ret = kiran_biometrics_get_fprint (&saveTemplate, &saveTemplateLen, priv->fprint_verify_id);
     dzlog_debug ("kiran_biometrics_get_fprint ret is %d and len is %d\n", ret, saveTemplateLen);
     if (ret != FPRINT_RESULT_OK)
     {
@@ -798,7 +785,7 @@ do_finger_verify (gpointer data)
         }
         else
         {
-            char *msg = ("Fingerprint not match, place again!");
+            char *msg = _("Fingerprint not match, place again!");
 
             switch (ret)
             {
@@ -848,6 +835,7 @@ do_finger_verify (gpointer data)
     kiran_fprint_manager_close (priv->kfpmanager);
     priv->fprint_busy = FALSE;
     priv->fp_action = ACTION_NONE;
+    g_free(saveTemplate);
 
     g_thread_exit (0);
 }

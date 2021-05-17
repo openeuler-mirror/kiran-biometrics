@@ -90,7 +90,7 @@ get_auth_item (KiranAccountsUser *user,
     						    &error);
     if (!ret || !auth_items)
     {
-        D(pamh, "Error with getting the finger auth item: %s", error->message);
+        D(pamh, "Error with getting the auth item: %s", error->message);
         g_error_free (error);
         auth = g_strdup (NEED_DATA);
     }
@@ -101,7 +101,7 @@ get_auth_item (KiranAccountsUser *user,
         if (id)
         {
             auth = id;
-            D(pamh, "Error with getting the finger auth id: %s", id);
+            D(pamh, "Getting the auth id: %s", id);
         }
         else
         {
