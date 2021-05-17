@@ -125,3 +125,19 @@ msgstr "未找到人脸设备"
 #: ../src/kiran-biometrics.c:950
 msgid "Looking for you face, Please look the camera!"
 msgstr "正在寻找你，请对准摄像头!"
+
+msgid "Your swipe was too short, please try again."
+msgstr "指纹录入过快，请重新录入!"
+
+msgid "Scan failed, please remove your finger and then try again."
+msgstr "扫描指纹失败，请拿开手指后再次录入."
+
+msgid "Didn't catch that, please center your finger on the sensor and try again."
+msgstr "没有扫描到指纹，请把手指放在感应器的中央进行录入."
+
+msgid "Didn't quite catch that. Please try again."
+msgstr "没有扫描到指纹，请重新录入!"
+
+
+msgid "Enroll stage passed %d. Please place the finger again!"
+msgstr "完成%d次采集，请继续录入指纹!"

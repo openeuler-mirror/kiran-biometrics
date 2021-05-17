@@ -18,11 +18,13 @@
 #endif /* HAVE_KIRAN_FACE */
 
 #ifndef MAX_TRY_COUNT 
-#define MAX_TRY_COUNT 20               /* 最大尝试次数 */
+#define MAX_TRY_COUNT 50               /* 最大尝试次数 */
 #endif
 
 #define DEFAULT_TIME_OUT 5000          /* 一次等待指纹时间，单位毫秒*/
 #define MAX_FPRINT_TEMPLATE  10240     /* 最大指纹模板长度 */
+
+#define BUFFER_SIZE 1024
 
 GQuark fprint_error_quark(void);
 GType fprint_error_get_type(void);
@@ -438,7 +440,7 @@ do_finger_enroll (gpointer data)
 {
     KiranBiometrics *kirBiometrics = KIRAN_BIOMETRICS (data);
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
-    int ret;
+    int ret = FPRINT_RESULT_FAIL;
     int i;
     int try_count = 0;
     int progress = 0;
@@ -446,6 +448,8 @@ do_finger_enroll (gpointer data)
     unsigned int templateLens[3];
     unsigned char *regTemplate = NULL;
     unsigned int length;
+    int index = 0;
+    int enroll_number = 0;
     
     for (i = 0; i < 3; i++)
     {
@@ -454,27 +458,59 @@ do_finger_enroll (gpointer data)
     
     for (i = 0; i < 3 && (priv->fp_action == FP_ACTION_ENROLL);)
     {
+	char *msg = _("Please place the finger again!");
+        char pass_message[BUFFER_SIZE] = {0};
+
         if (templates[i])
         {
     	    //重复录入时，释放内存
             g_free (templates[i]);
     	    templates[i] = NULL;
         }
-        progress = 25 * i;
+
 	if (i == 0)
 	{
-            g_signal_emit(kirBiometrics, 
-              	          signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-                          _("Please place the finger!"), "", progress, 
-              	          FALSE);
+           msg = _("Please place the finger!");
+
 	}
-	else
-	{
-            g_signal_emit(kirBiometrics, 
-              	         signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-                         _("Please place the finger again!"), "", progress, 
-              	         FALSE);
-	}
+            
+        switch (ret)
+        {
+	    case FPRINT_RESULT_ENROLL_RETRY_TOO_SHORT:
+                msg = _("Your swipe was too short, please try again.");
+                break;
+ 
+	    case FPRINT_RESULT_ENROLL_RETRY_REMOVE_FINGER:
+                msg = _("Scan failed, please remove your finger and then try again.");
+                break;
+
+	    case FPRINT_RESULT_ENROLL_RETRY_CENTER_FINGER:
+                msg = _("Didn't catch that, please center your finger on the sensor and try again.");
+                break;
+
+	    case FPRINT_RESULT_ENROLL_RETRY:
+                msg = _("Didn't quite catch that. Please try again.");
+                break;
+
+	    case FPRINT_RESULT_ENROLL_PASS:
+                enroll_number++;
+                snprintf(pass_message, BUFFER_SIZE, _("Enroll stage passed %d. Please place the finger again!"), enroll_number);
+                msg = pass_message;
+                break;
+
+            default:
+               break;
+        }
+
+        //计算进度， 0, 25, 50, 75, 100这几个期间
+        progress = 25 * i + enroll_number * 8;
+        if (progress > 99) //最大96, 只有保存了才能成功后才能100
+           progress = 99;
+
+        g_signal_emit(kirBiometrics, 
+              	      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
+                      msg, "", progress, 
+              	      FALSE);
     
         ret = kiran_fprint_manager_acquire_finger_print (priv->kfpmanager,
     	                                                 &templates[i],
@@ -496,12 +532,7 @@ do_finger_enroll (gpointer data)
             
                 dzlog_debug ("kiran_fprint_manager_template_match ret is %d\n", ret);
                 if (ret == FPRINT_RESULT_UNSUPPORT)//不支持指纹比对
-                {
-                     ret = kiran_fprint_manager_verify_finger_print (priv->kfpmanager,
-                                                                     templates[0],
-                                                                     templateLens[0],
-                                                                     DEFAULT_TIME_OUT);
-                }
+                    ret = FPRINT_RESULT_OK;
             
                 if (ret != FPRINT_RESULT_OK)
                 {
@@ -520,6 +551,10 @@ do_finger_enroll (gpointer data)
             {
                 i++;
             }
+        } else if (ret == FPRINT_RESULT_ENROLL_COMPLETE) //录入内部完成
+        {
+             i++;
+	     break;
         }
     
         if (try_count >= MAX_TRY_COUNT)
@@ -541,15 +576,14 @@ do_finger_enroll (gpointer data)
     					           &regTemplate,
     					           &length);
         dzlog_debug ("kiran_fprint_manager_template_merge ret is %d, len is %d\n", ret, length);
-        if (ret == FPRINT_RESULT_UNSUPPORT)
-        { 
-            length = templateLens[0];
-            regTemplate = (unsigned char *)malloc(length);
-            if (regTemplate != NULL)
-                memcpy (regTemplate, templates[0], length);
-
-	    ret = FPRINT_RESULT_OK;
-        }
+    }
+    else if (ret == FPRINT_RESULT_ENROLL_COMPLETE) //不支持指纹合成
+    {
+        length = templateLens[0];
+        regTemplate = (unsigned char *)malloc(length);
+        if (regTemplate != NULL)
+        memcpy (regTemplate, templates[0], length);
+        dzlog_debug ("fingger enroll complete with date len [%d]", length);
     }
     
     if (ret == FPRINT_RESULT_OK)
@@ -560,28 +594,26 @@ do_finger_enroll (gpointer data)
                                                            regTemplate,
                                                            length);
 
-        if (ret == FPRINT_RESULT_UNSUPPORT)//不支持指纹比对
-        {
-            ret = kiran_fprint_manager_verify_finger_print (priv->kfpmanager,
-                                                            regTemplate,
-                                                            length,
-                                                            DEFAULT_TIME_OUT);
-        }
-        
-        if (ret == FPRINT_RESULT_OK)
-        {
-    	    gchar *id = NULL;
+    }
+    else if (ret == FPRINT_RESULT_ENROLL_COMPLETE) //不支持两个指纹模板比对
+    {
+        ret = FPRINT_RESULT_OK;
+    }
+
     
-            ret = kiran_biometrics_save_fprint (regTemplate, length, &id);
-            if (ret == 0)
-            {
-                g_signal_emit(kirBiometrics, 
-                      	  signals[SIGNAL_FPRINT_ENROLL_STATUS],  0,
-                              _("Successed enroll finger!"), id, 100, 
-                              TRUE);
-            }
-    	    g_free(id);
+    if (ret == FPRINT_RESULT_OK)
+    {
+        gchar *id = NULL;
+        //进行指纹保存
+        ret = kiran_biometrics_save_fprint (regTemplate, length, &id);
+        if (ret == 0)
+        {
+            g_signal_emit(kirBiometrics, 
+                  	  signals[SIGNAL_FPRINT_ENROLL_STATUS],  0,
+                          _("Successed enroll finger!"), id, 100, 
+                          TRUE);
         }
+        g_free(id);
     }
 
     if (ret != FPRINT_RESULT_OK)
@@ -602,8 +634,8 @@ do_finger_enroll (gpointer data)
 	}
     }
     
-    for (i = 0; i < 3; i++)
-        g_free(templates[i]);
+    for (index = 0; index < i; index++)
+        g_free(templates[index]);
     
     g_free (regTemplate);
 
@@ -730,7 +762,7 @@ do_finger_verify (gpointer data)
                       _("Please place the finger!"), FALSE, FALSE);
 	}
 
-        //调用指纹内部接口进行比对
+        //首先调用指纹内部接口进行比对
         ret = kiran_fprint_manager_verify_finger_print (priv->kfpmanager,
                                                         saveTemplate,
                                                         saveTemplateLen,
@@ -766,9 +798,33 @@ do_finger_verify (gpointer data)
         }
         else
         {
+            char *msg = ("Fingerprint not match, place again!");
+
+            switch (ret)
+            {
+                case FPRINT_RESULT_ENROLL_RETRY_TOO_SHORT:
+                    msg = _("Your swipe was too short, please try again.");
+                    break;
+
+                case FPRINT_RESULT_ENROLL_RETRY_REMOVE_FINGER:
+                    msg = _("Scan failed, please remove your finger and then try again.");
+                    break;
+
+                case FPRINT_RESULT_ENROLL_RETRY_CENTER_FINGER:
+                    msg = _("Didn't catch that, please center your finger on the sensor and try again.");
+                    break;
+
+                case FPRINT_RESULT_ENROLL_RETRY:
+                    msg = _("Didn't quite catch that. Please try again.");
+                    break;
+
+                default:
+                   break;
+            }
+
             g_signal_emit(kirBiometrics, 
               	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                          _("Fingerprint not match, place again!"), FALSE, TRUE);
+                          msg, FALSE, TRUE);
         }
     }
 

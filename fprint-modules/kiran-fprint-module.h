@@ -10,6 +10,13 @@ enum {
     FPRINT_RESULT_TIMEOUT = 2, //超时
     FPRINT_RESULT_NO_DEVICE = 3, //设备不存在
     FPRINT_RESULT_OPEN_DEVICE_FAIL = 4, //打开设备失败
+    //For fprint
+    FPRINT_RESULT_ENROLL_RETRY_TOO_SHORT = 5,
+    FPRINT_RESULT_ENROLL_RETRY_CENTER_FINGER = 6,
+    FPRINT_RESULT_ENROLL_RETRY_REMOVE_FINGER = 7,
+    FPRINT_RESULT_ENROLL_RETRY = 8,
+    FPRINT_RESULT_ENROLL_PASS = 9,
+    FPRINT_RESULT_ENROLL_COMPLETE = 10,
 };
 
 /*
@@ -89,6 +96,7 @@ HANDLE kiran_fprint_open_device (int index);
  *
  * [返回值]
  * 0 表示成功
+ * FPRINT_RESULT_ENROLL_COMPLETE 表示指纹驱动内部进行采集完成时返回，如libfprint库
  * 其它表示失败
  */
 int kiran_fprint_acquire_finger_print (HANDLE hDevice,
