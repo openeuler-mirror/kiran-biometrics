@@ -164,8 +164,9 @@ int kiran_fprint_template_match (HANDLE hDevice,
 }
 
 int kiran_fprint_verify_finger_print (HANDLE hDevice,
-                                      unsigned char *fpTemplate,
-                                      unsigned int cbTemplate,
+                                      unsigned char **fpTemplate,
+                                      unsigned int *cbTemplate,
+                                      unsigned int *number,
                                       unsigned int timeout)
 {
     return FPRINT_RESULT_UNSUPPORT;

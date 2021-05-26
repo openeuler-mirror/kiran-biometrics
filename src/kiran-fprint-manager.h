@@ -41,8 +41,9 @@ int kiran_fprint_manager_acquire_finger_print (KiranFprintManager *kfp_manager,
                                                unsigned int *cbTemplate,
 					       unsigned int timeout);
 int kiran_fprint_manager_verify_finger_print (KiranFprintManager *kfp_manager,
-		                              unsigned char *fpTemplate,
-                                              unsigned int cbTemplate,
+		                              unsigned char **fpTemplate,
+                                              unsigned int *cbTemplate,
+                                              unsigned int *number, 
 					      unsigned int timeout);
 int kiran_fprint_manager_template_merge (KiranFprintManager *kfp_manager,
 		                         unsigned char *fpTemplate1,

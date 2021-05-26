@@ -21,7 +21,7 @@
 
 typedef struct {
     char *result;
-    gboolean match;
+    char *id;
     pam_handle_t *pamh;
     GMainLoop *loop;
     gboolean should_handle;
@@ -60,7 +60,7 @@ get_dbus_connection (pam_handle_t *pamh, GMainLoop **ret_loop)
 }
 
 static void 
-verify_result(GObject *object, const char *result, gboolean done, gboolean match ,gpointer user_data)
+verify_result(GObject *object, const char *result, gboolean done, const char *id ,gpointer user_data)
 {
     verify_data *data = user_data;
     const char *msg;
@@ -72,9 +72,9 @@ verify_result(GObject *object, const char *result, gboolean done, gboolean match
     }
 
     D(data->pamh, "Verify result: %s\n", result);
-    data->match = match;
     if (done != FALSE) {
             data->result = g_strdup (result);
+            data->id = g_strdup (id);
             g_main_loop_quit (data->loop);
             return;
     }
@@ -104,12 +104,12 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
     data->pamh = pamh;
     data->loop = loop;
     data->result = NULL;
-    data->match = FALSE;
+    data->id = NULL;
     data->should_handle = TRUE;
 
     dbus_g_proxy_add_signal(biometrics, 
 		            "VerifyFprintStatus", 
-			    G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN, NULL);
+			    G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, NULL);
 
     dbus_g_proxy_connect_signal(biometrics, 
 		               "VerifyFprintStatus", 
@@ -118,7 +118,7 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
     ret = PAM_AUTH_ERR;
     D(data->pamh, "Verify id: %s\n", auth);
 
-    if(!com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_start (biometrics, auth, &error))
+    if(!com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_start (biometrics, &error))
     {
 	if (dbus_g_error_has_name (error, "com.kylinsec.Kiran.SystemDaemon.Biometrics.Error.DeviceBusy"))
 	{
@@ -129,7 +129,7 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
 	}
 
 	error = NULL;
-	if(!com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_start (biometrics, auth, &error))
+	if(!com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_start (biometrics, &error))
 	{
             D(pamh, "VerifyFprintStart failed: %s", error->message);
     	    send_info_msg (pamh,  error->message);
@@ -153,7 +153,7 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
     com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_stop(biometrics, NULL);
     dbus_g_proxy_disconnect_signal(biometrics, "VerifyFprintStatus", G_CALLBACK(verify_result), data);
 
-    if (data->match)
+    if (data->id && (strcmp(data->id, auth) == 0))
     {
 	//认证成功
         ret = PAM_SUCCESS;
@@ -166,6 +166,7 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
     }
 
     g_free (data->result);
+    g_free (data->id);
     g_free (data);
 
     return ret;
@@ -249,8 +250,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     g_type_init();
 #endif
 
-    dbus_g_object_register_marshaller (biometrics_marshal_VOID__STRING_BOOLEAN_BOOLEAN,
-                                       G_TYPE_NONE, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN, G_TYPE_INVALID);
+    dbus_g_object_register_marshaller (biometrics_marshal_VOID__STRING_BOOLEAN_STRING,
+                                       G_TYPE_NONE, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INVALID);
 
     pam_get_item(pamh, PAM_RHOST, (const void **)(const void*) &rhost);
 

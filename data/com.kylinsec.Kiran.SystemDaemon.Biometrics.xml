@@ -90,11 +90,7 @@
     </method>
 
     <method name="VerifyFprintStart">
-       <arg type="s" name="id" direction="in">
-               <doc:doc><doc:summary>A string representing the finger to verify.</doc:summary></doc:doc>
-       </arg>
        <annotation name="org.freedesktop.DBus.GLib.Async" value="" />
-
        <doc:doc>
          <doc:description>
                  <doc:para>
@@ -129,10 +125,10 @@
               </doc:doc>
       </arg>
 
-      <arg type="b" name="match">
+      <arg type="s" name="id">
               <doc:doc>
                       <doc:summary>
-                              Whether the fprint match.
+                              Whether the fprint match id.
                       </doc:summary>
               </doc:doc>
       </arg>

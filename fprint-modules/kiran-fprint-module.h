@@ -112,22 +112,27 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
  * hDevice
  *       设备操作实例句柄
  * fpTemplate [in]
- *       指向指纹模板地址
+ *       指向指纹模板数组地址
  *
  * cbTemplate [in]
- *       指纹模板数据大小
+ *       指纹模板长度数组
+ *
+ * number [in]
+ *       作为输入时表示指纹模板个数
+ *       作为输出时表示匹配的指纹模板下标
  *
  * timeout
  * 超时时间, 单位为毫秒
  *
  * [返回值]
- * 0 表示匹配
+ * 0 匹配
  * -1 表示不支持
- * 其它表示失败
+ *  其它表示失败
  */
 int kiran_fprint_verify_finger_print (HANDLE hDevice,
-			    	       unsigned char *fpTemplate,
-				       unsigned int cbTemplate,
+			    	       unsigned char **fpTemplate,
+				       unsigned int *cbTemplate,
+                                       unsigned int *number,
 				       unsigned int timeout);
 
 /*

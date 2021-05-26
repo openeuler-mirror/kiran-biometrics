@@ -24,6 +24,8 @@
 #define DEFAULT_TIME_OUT 5000          /* 一次等待指纹时间，单位毫秒*/
 #define BUFFER_SIZE 1024
 
+#define SUPPORT_FINGER_NUMBER 100       /* 最大指纹模板数目 */ 
+
 GQuark fprint_error_quark(void);
 GType fprint_error_get_type(void);
 
@@ -60,7 +62,6 @@ struct _KiranBiometricsPrivate
 
     GThread *fprint_enroll_thread;
     GThread *fprint_verify_thread;
-    gchar *fprint_verify_id;
 
 #ifdef HAVE_KIRAN_FACE
     KiranFaceManager* kfamanager;
@@ -76,7 +77,6 @@ static void kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics
 static void kiran_biometrics_enroll_fprint_stop (KiranBiometrics *kirBiometrics, 
 						 DBusGMethodInvocation *context);
 static void kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics, 
-						  const char *id,
 						  DBusGMethodInvocation *context);
 static void kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics, 
 						 DBusGMethodInvocation *context);
@@ -125,7 +125,6 @@ kiran_biometrics_finalize (GObject *object)
 #ifdef HAVE_KIRAN_FACE
     g_object_unref (priv->kfamanager);
 #endif /* HAVE_KIRAN_FACE */
-    g_free (priv->fprint_verify_id);
 
     G_OBJECT_CLASS (kiran_biometrics_parent_class)->finalize (object);
 }
@@ -153,7 +152,7 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 		    	               G_SIGNAL_RUN_LAST, 
 				       0, 
 				       NULL, NULL, NULL, 
-				       G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN);
+				       G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING);
 
     signals[SIGNAL_FPRINT_ENROLL_STATUS] = 
 	    		g_signal_new ("enroll-fprint-status",
@@ -280,7 +279,6 @@ kiran_biometrics_init (KiranBiometrics *self)
     priv->fp_action = ACTION_NONE;
     priv->fprint_enroll_thread = NULL;
     priv->fprint_verify_thread = NULL;
-    priv->fprint_verify_id = NULL;
 
 #ifdef HAVE_KIRAN_FACE
     priv->face_busy = FALSE;
@@ -318,18 +316,14 @@ kiran_biometrics_remove_fprint (const gchar *md5)
 }
 
 static int
-kiran_biometrics_get_fprint (unsigned char **template,
-		             unsigned int  *length,
-			     const gchar *md5)
+kiran_biometrics_get_save_fprint (unsigned char **template,
+		                  unsigned int  *length,
+                                  char *path)
 {
     GError *error = NULL;
     gint ret = 0;
-    gchar *path;
     gsize read_size;
     gboolean result;
-    gchar *save_md5 = NULL;
-
-    path = g_strdup_printf ("%s/%s.bat", FPRINT_DIR, md5);
 
     result = g_file_get_contents(path,
                                  (gchar **)template,
@@ -342,21 +336,68 @@ kiran_biometrics_get_fprint (unsigned char **template,
         g_error_free (error);
         ret = -1; 
     }
+    
+    return ret;
+}
 
-    save_md5 = g_compute_checksum_for_string (G_CHECKSUM_MD5,
-                                              *template,
-                                              *length);
+static int
+kiran_biometrics_get_save_fprints (unsigned char **saveTemplates,
+                                   unsigned int *saveTemplateLens,
+                                   int *save_number
+                                   )
+{
+    GError *error = NULL;
+    GDir *dir = NULL;
+    gint ret = 0;
+    const char *name;
 
-    if (g_strcmp0(md5, save_md5))
+    *save_number = 0;
+    dir = g_dir_open (FPRINT_DIR, 
+                      0,
+                      &error); 
+
+    if (dir == NULL)
     {
-        //md5发生变化时， 返回错误
-        g_free (*template);
-        *template = NULL;
-        ret = -1; 
+        dzlog_debug ("open dir %s failed:", FPRINT_DIR, error->message);
+        g_error_free (error);
+        return -1;
     }
 
-    g_free(path);
-    
+    while ((name = g_dir_read_name (dir)))
+    {
+
+        if (*save_number == SUPPORT_FINGER_NUMBER)
+        {
+            dzlog_debug ("read save fprint reach %d:", SUPPORT_FINGER_NUMBER);
+            break;
+        }
+
+        if (g_str_has_suffix (name, ".bat"))
+        {
+            unsigned char *saveTemplate = NULL;
+            unsigned int saveTemplateLen = 0;
+            int ret = 0;
+            gchar *path;
+
+            path = g_strdup_printf ("%s/%s", FPRINT_DIR, name);
+            ret = kiran_biometrics_get_save_fprint (&saveTemplate, &saveTemplateLen, path);
+
+            if (ret == 0)
+            {
+	       saveTemplates[*save_number] = saveTemplate;
+               saveTemplateLens[*save_number] = saveTemplateLen;
+               *save_number = *save_number + 1;
+            }
+
+            g_free(path);
+        }
+    }
+
+    g_dir_close (dir);
+
+    if (*save_number == 0)
+        return -1;    
+
     return ret;
 }
 
@@ -711,20 +752,24 @@ do_finger_verify (gpointer data)
 {
     KiranBiometrics *kirBiometrics = KIRAN_BIOMETRICS (data);
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
-    unsigned char *saveTemplate = NULL;
-    unsigned int saveTemplateLen = 0;
-    unsigned char *template;
+    unsigned char *saveTemplates[SUPPORT_FINGER_NUMBER];
+    unsigned int saveTemplateLens[SUPPORT_FINGER_NUMBER];
+    int save_number = 0;
+    int number = 0;
+    unsigned char *template = NULL;
     unsigned int templateLen;
+    char *md5 = NULL;
     int i = 0;
     int ret = 0;
 
-    ret = kiran_biometrics_get_fprint (&saveTemplate, &saveTemplateLen, priv->fprint_verify_id);
-    dzlog_debug ("kiran_biometrics_get_fprint ret is %d and len is %d\n", ret, saveTemplateLen);
+    memset(saveTemplates, 0x00, sizeof(unsigned char *) * SUPPORT_FINGER_NUMBER);
+
+    ret = kiran_biometrics_get_save_fprints (saveTemplates, saveTemplateLens, &save_number);
     if (ret != FPRINT_RESULT_OK)
     {
         g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                       _("Not Found The Id Fprint Template!"), TRUE, FALSE);
+                       _("Not Found The Id Fprint Template!"), TRUE, "");
 
         kiran_fprint_manager_close (priv->kfpmanager);
         priv->fprint_busy = FALSE;
@@ -746,13 +791,15 @@ do_finger_verify (gpointer data)
 	{
             g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                      _("Please place the finger!"), FALSE, FALSE);
+                      _("Please place the finger!"), FALSE, "");
 	}
 
         //首先调用指纹内部接口进行比对
+        number = save_number;
         ret = kiran_fprint_manager_verify_finger_print (priv->kfpmanager,
-                                                        saveTemplate,
-                                                        saveTemplateLen,
+                                                        saveTemplates,
+                                                        saveTemplateLens,
+                                                        &number,
                                                         DEFAULT_TIME_OUT);
 
         dzlog_debug ("kiran_fprint_verify_acquire_finger_print ret is %d\n", ret);
@@ -766,21 +813,46 @@ do_finger_verify (gpointer data)
 
             if (ret == FPRINT_RESULT_OK)
             {
-                ret = kiran_fprint_manager_template_match (priv->kfpmanager,
-                                                                   template,
-                                                                   templateLen,
-                                                                   saveTemplate,
-                                                                   saveTemplateLen);
+                int j = 0;
+
+                for (j = 0; j < save_number; j++)
+                { 
+                    ret = kiran_fprint_manager_template_match (priv->kfpmanager,
+                                                               template,
+                                                               templateLen,
+                                                               saveTemplates[j],
+                                                               saveTemplateLens[j]);
+
+                   if (ret == FPRINT_RESULT_OK)
+                   {
+                   
+                      md5 = g_compute_checksum_for_string (G_CHECKSUM_MD5,
+		    			                   saveTemplates[j],
+					                   saveTemplateLens[j]);
+                      break;
+                   }
+                }
+
                 dzlog_debug ("kiran_fprint_manager_template_match ret is %d\n", ret);
             }
         }
-
-        if (ret == FPRINT_RESULT_OK)
+        else if (ret == FPRINT_RESULT_OK)
         {
+
+            if (number >=0 && number < save_number)
+            {
+                md5 = g_compute_checksum_for_string (G_CHECKSUM_MD5,
+	    			                     saveTemplates[number],
+				                     saveTemplateLens[number]);
+            }
+        }
+
+        if (md5 != NULL)
+        {
+           //指纹匹配
             g_signal_emit(kirBiometrics, 
               	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                          _("Fingerprint match!"), TRUE, TRUE);
-            //指纹匹配
+                          _("Fingerprint match!"), TRUE, md5);
             break;
         }
         else
@@ -811,7 +883,7 @@ do_finger_verify (gpointer data)
 
             g_signal_emit(kirBiometrics, 
               	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                          msg, FALSE, TRUE);
+                          msg, FALSE, "");
         }
     }
 
@@ -822,27 +894,31 @@ do_finger_verify (gpointer data)
 	{
             g_signal_emit(kirBiometrics,
                           signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                          _("Cancel fprint verify!"), TRUE, FALSE);
+                          _("Cancel fprint verify!"), TRUE, "");
 	}
 	else
 	{
             g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                      _("Fingerprint over max try count!"), TRUE, FALSE);
+                      _("Fingerprint over max try count!"), TRUE, "");
 	}
     }
 
     kiran_fprint_manager_close (priv->kfpmanager);
     priv->fprint_busy = FALSE;
     priv->fp_action = ACTION_NONE;
-    g_free(saveTemplate);
+
+    for (i = 0; i++; i < save_number)
+        g_free(saveTemplates[i]);
+
+    g_free (md5);
+    g_free (template);
 
     g_thread_exit (0);
 }
 
 static void 
 kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics, 
-				      const char *id,
 				      DBusGMethodInvocation *context)
 {
     KiranBiometricsPrivate *priv = kirBiometrics->priv;
@@ -863,9 +939,6 @@ kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics,
     {
         priv->fprint_busy = TRUE;
         priv->fp_action = FP_ACTION_VERIFY;
-
-	g_free (priv->fprint_verify_id);
-	priv->fprint_verify_id = g_strdup (id);
 
 	priv->fprint_verify_thread = g_thread_new (NULL,
 		                            do_finger_verify,

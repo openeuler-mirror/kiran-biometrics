@@ -38,8 +38,9 @@ struct _KiranFprintModule
 				       unsigned int *cbTemplate,
 				       unsigned int timeout);
     int (*fprint_verify_finger_print) (gpointer hDevice,
-			    	       unsigned char *fpTemplate,
-				       unsigned int cbTemplate,
+			    	       unsigned char **fpTemplate,
+				       unsigned int *cbTemplate,
+                                       unsigned int *number,
 				       unsigned int timeout);
     int (*fprint_close_device ) (gpointer hDevice);
     int (*fprint_template_merge) (gpointer hDevice,
