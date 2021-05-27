@@ -125,6 +125,14 @@
               </doc:doc>
       </arg>
 
+      <arg type="b" name="found">
+              <doc:doc>
+                      <doc:summary>
+                              Whether found the fprint id.
+                      </doc:summary>
+              </doc:doc>
+      </arg>
+
       <arg type="s" name="id">
               <doc:doc>
                       <doc:summary>

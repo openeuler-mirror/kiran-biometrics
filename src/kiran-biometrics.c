@@ -152,7 +152,7 @@ kiran_biometrics_class_init (KiranBiometricsClass *klass)
 		    	               G_SIGNAL_RUN_LAST, 
 				       0, 
 				       NULL, NULL, NULL, 
-				       G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING);
+				       G_TYPE_NONE, 4, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN, G_TYPE_STRING);
 
     signals[SIGNAL_FPRINT_ENROLL_STATUS] = 
 	    		g_signal_new ("enroll-fprint-status",
@@ -769,7 +769,7 @@ do_finger_verify (gpointer data)
     {
         g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                       _("Not Found The Id Fprint Template!"), TRUE, "");
+                       _("Not Found The Id Fprint Template!"), TRUE, FALSE, "");
 
         kiran_fprint_manager_close (priv->kfpmanager);
         priv->fprint_busy = FALSE;
@@ -791,7 +791,7 @@ do_finger_verify (gpointer data)
 	{
             g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                      _("Please place the finger!"), FALSE, "");
+                      _("Please place the finger!"), FALSE, FALSE, "");
 	}
 
         //首先调用指纹内部接口进行比对
@@ -849,11 +849,10 @@ do_finger_verify (gpointer data)
 
         if (md5 != NULL)
         {
-           //指纹匹配
-            g_signal_emit(kirBiometrics, 
+           g_signal_emit(kirBiometrics, 
               	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                          _("Fingerprint match!"), TRUE, md5);
-            break;
+                      _("Fingerprint match!"), FALSE, TRUE, md5);
+           g_free (md5);
         }
         else
         {
@@ -883,7 +882,7 @@ do_finger_verify (gpointer data)
 
             g_signal_emit(kirBiometrics, 
               	      signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                          msg, FALSE, "");
+                          msg, FALSE, FALSE, "");
         }
     }
 
@@ -894,13 +893,13 @@ do_finger_verify (gpointer data)
 	{
             g_signal_emit(kirBiometrics,
                           signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                          _("Cancel fprint verify!"), TRUE, "");
+                          _("Cancel fprint verify!"), TRUE, FALSE, "");
 	}
 	else
 	{
             g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
-                      _("Fingerprint over max try count!"), TRUE, "");
+                      _("Fingerprint over max try count!"), TRUE, FALSE, "");
 	}
     }
 
@@ -911,7 +910,6 @@ do_finger_verify (gpointer data)
     for (i = 0; i++; i < save_number)
         g_free(saveTemplates[i]);
 
-    g_free (md5);
     g_free (template);
 
     g_thread_exit (0);

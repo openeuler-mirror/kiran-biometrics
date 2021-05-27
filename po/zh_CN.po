@@ -141,3 +141,6 @@ msgstr "没有扫描到指纹，请重新录入!"
 
 msgid "Enroll stage passed %d. Please place the finger again!"
 msgstr "完成%d次采集，请继续录入指纹!"
+
+msgid "User and Fprint Not Math, Place Again!"
+msgstr "指纹和当前用户不匹配, 请重新录入!"

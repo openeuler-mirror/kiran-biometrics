@@ -10,6 +10,8 @@
 
 #define PAM_SM_AUTH
 #include <security/pam_modules.h>
+#include <glib/gi18n.h>
+#include <locale.h>
 
 #include "config.h"
 #include "kiran-biometrics-proxy.h"
@@ -25,6 +27,7 @@ typedef struct {
     pam_handle_t *pamh;
     GMainLoop *loop;
     gboolean should_handle;
+    gboolean match;
 } verify_data;
 
 static DBusGConnection *
@@ -60,10 +63,12 @@ get_dbus_connection (pam_handle_t *pamh, GMainLoop **ret_loop)
 }
 
 static void 
-verify_result(GObject *object, const char *result, gboolean done, const char *id ,gpointer user_data)
+verify_result(GObject *object, const char *result, gboolean done, gboolean found, const char *id, gpointer user_data)
 {
     verify_data *data = user_data;
     const char *msg;
+
+    D(data->pamh, "Verify result: %s and id: %s\n", result, id);
 
     if (!data->should_handle)
     {
@@ -71,14 +76,19 @@ verify_result(GObject *object, const char *result, gboolean done, const char *id
 	return;
     }
 
-    D(data->pamh, "Verify result: %s\n", result);
-    if (done != FALSE) {
+    if (found && (g_strcmp0(id, data->id) == 0))
+        data->match = TRUE; 
+
+    if (done != FALSE || data->match) {
             data->result = g_strdup (result);
-            data->id = g_strdup (id);
             g_main_loop_quit (data->loop);
             return;
     }
-    send_info_msg (data->pamh, result);
+
+    if (found) //指纹和当前用户不符
+        send_info_msg (data->pamh, _("User and Fprint Not Math, Place Again!"));
+    else
+        send_info_msg (data->pamh, result);
 }
 
 static gboolean 
@@ -104,12 +114,13 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
     data->pamh = pamh;
     data->loop = loop;
     data->result = NULL;
-    data->id = NULL;
+    data->id = g_strdup (auth);
     data->should_handle = TRUE;
+    data->match = FALSE;
 
     dbus_g_proxy_add_signal(biometrics, 
 		            "VerifyFprintStatus", 
-			    G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, NULL);
+			    G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN, G_TYPE_STRING, NULL);
 
     dbus_g_proxy_connect_signal(biometrics, 
 		               "VerifyFprintStatus", 
@@ -150,10 +161,10 @@ do_verify(GMainLoop *loop, pam_handle_t *pamh, DBusGProxy *biometrics, const cha
     g_source_destroy (source);
     g_source_unref (source);
 
-    com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_stop(biometrics, NULL);
+    com_kylinsec_Kiran_SystemDaemon_Biometrics_verify_fprint_stop(biometrics, NULL); //关闭指纹认证
     dbus_g_proxy_disconnect_signal(biometrics, "VerifyFprintStatus", G_CALLBACK(verify_result), data);
 
-    if (data->id && (strcmp(data->id, auth) == 0))
+    if (data->match)
     {
 	//认证成功
         ret = PAM_SUCCESS;
@@ -250,8 +261,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
     g_type_init();
 #endif
 
-    dbus_g_object_register_marshaller (biometrics_marshal_VOID__STRING_BOOLEAN_STRING,
-                                       G_TYPE_NONE, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INVALID);
+    setlocale(LC_ALL, "");
+    bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+    textdomain (GETTEXT_PACKAGE);
+
+    dbus_g_object_register_marshaller (biometrics_marshal_VOID__STRING_BOOLEAN_BOOLEAN_STRING,
+                                       G_TYPE_NONE, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_INVALID);
 
     pam_get_item(pamh, PAM_RHOST, (const void **)(const void*) &rhost);
 
