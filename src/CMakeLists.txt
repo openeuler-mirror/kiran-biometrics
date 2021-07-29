@@ -12,6 +12,7 @@ endif()
 pkg_check_modules (ZLOG REQUIRED zlog)
 
 configure_file(${SRC_DIR}/config.h.in config.h)
+configure_file(${SRC_DIR}/kiran-biometrics-i.h.in kiran-biometrics-i.h)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -27,3 +28,4 @@ else()
 endif()
 add_dependencies(kiran_biometrics_manager kiran-biometrics-stub.h)
 install(TARGETS kiran_biometrics_manager RUNTIME DESTINATION ${INSTALL_BINDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/kiran-biometrics-i.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
