@@ -21,7 +21,7 @@
 #define MAX_TRY_COUNT 50               /* 最大尝试次数 */
 #endif
 
-#define DEFAULT_TIME_OUT 5000          /* 一次等待指纹时间，单位毫秒*/
+#define DEFAULT_TIME_OUT  600000          /* 一次等待指纹时间，单位毫秒*/
 #define BUFFER_SIZE 1024
 
 #define SUPPORT_FINGER_NUMBER 100       /* 最大指纹模板数目 */ 
