@@ -103,6 +103,15 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
 			    	       unsigned char **fpTemplate,
 				       unsigned int *cbTemplate,
 				       unsigned int timeout);
+/* 
+ * [功能]
+ * 停止采集指纹模板
+ *
+ * [参数]
+ * hDevice
+ *       设备操作实例句柄
+ */
+void kiran_fprint_acquire_finger_print_stop(HANDLE hDevice);
 
 /*
  * [功能]

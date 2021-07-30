@@ -739,6 +739,7 @@ kiran_biometrics_enroll_fprint_stop (KiranBiometrics *kirBiometrics,
 
     if (priv->fprint_enroll_thread)
     {
+        kiran_fprint_manager_acquire_finger_print_stop (priv->kfpmanager);
         g_thread_join (priv->fprint_enroll_thread);
         priv->fprint_enroll_thread = NULL;
     }
@@ -972,6 +973,7 @@ kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics,
 
     if (priv->fprint_verify_thread)
     {
+        kiran_fprint_manager_acquire_finger_print_stop (priv->kfpmanager);
         g_thread_join (priv->fprint_verify_thread);
         priv->fprint_verify_thread = NULL;
     }

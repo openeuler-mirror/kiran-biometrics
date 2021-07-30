@@ -14,6 +14,8 @@
 static HANDLE m_libHandle = NULL;
 static HANDLE m_hDBCache = NULL;  //算法缓冲区
 
+static int do_acquire = 0;
+
 unsigned int 
 GetTickCount()  //获取当前时间
 {
@@ -129,6 +131,8 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
     unsigned int curTime;
     int ret;
 
+    do_acquire = 0;
+
     memset(paramValue, 0x0, 4);  //初始化paramValue[4]
     cbParamValue = 4;  //初始化cbParamValue
                                 /* |   设备  |   参数类型     |  参数值     |  参数数据长度  */
@@ -153,7 +157,7 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
 
     ret = FPRINT_RESULT_FAIL;
 
-    while (1)
+    while (0 == do_acquire)
     {
 
         ret = ZKFPM_AcquireFingerprint (hDevice, 
@@ -190,6 +194,12 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
     m_pImgBuf = NULL;
 
     return ret;
+}
+
+void 
+kiran_fprint_acquire_finger_print_stop(HANDLE hDevice)
+{
+    do_acquire = -1;
 }
 
 int kiran_fprint_close_device (HANDLE hDevice)

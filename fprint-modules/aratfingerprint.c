@@ -11,6 +11,8 @@
 #define FEATURELEN 1024
 #endif
 
+static int do_acquire = 0;
+
 unsigned int
 GetTickCount()  //获取当前时间
 {
@@ -63,6 +65,8 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
     unsigned int curTime;
     int quality;
 
+    do_acquire = 0;
+
     ret = ARAFPSCAN_GetImageInfo (hDevice, &width, &height, &dpi);
     if (ret != FPRINT_RESULT_OK)
 	return FPRINT_RESULT_FAIL;
@@ -71,7 +75,7 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
     if (rawdate == NULL)
 	return FPRINT_RESULT_FAIL;
 
-    while(1)
+    while(0 == do_acquire)
     {
 	curTime = GetTickCount();
         if (curTime - preTime >= timeout)
@@ -113,6 +117,12 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
     free(rawdate);
 
     return ret;
+}
+
+void 
+kiran_fprint_acquire_finger_print_stop(HANDLE hDevice)
+{
+    do_acquire = -1;
 }
 
 int kiran_fprint_close_device (HANDLE hDevice)
