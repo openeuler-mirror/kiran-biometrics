@@ -478,6 +478,23 @@ do_finger_enroll (gpointer data)
     unsigned int length;
     int index = 0;
     int enroll_number = 0;
+    unsigned char *saveTemplates[SUPPORT_FINGER_NUMBER];
+    unsigned int saveTemplateLens[SUPPORT_FINGER_NUMBER];
+    int save_number = 0;
+    gboolean over_support = FALSE;
+
+    memset(saveTemplates, 0x00, sizeof(unsigned char *) * SUPPORT_FINGER_NUMBER);
+
+    //获取当前保存的指纹模板
+    kiran_biometrics_get_save_fprints (saveTemplates, saveTemplateLens, &save_number);
+
+    if (save_number == SUPPORT_FINGER_NUMBER)
+    {
+	//达到最大指纹数目
+        dzlog_error ("finger enroll is on limit %d", SUPPORT_FINGER_NUMBER);
+	over_support = TRUE;
+	goto out;
+    }
     
     for (i = 0; i < 3; i++)
     {
@@ -632,40 +649,101 @@ do_finger_enroll (gpointer data)
     if (ret == FPRINT_RESULT_OK)
     {
         gchar *id = NULL;
-        //进行指纹保存
-        ret = kiran_biometrics_save_fprint (regTemplate, length, &id);
-        if (ret == 0)
+	int number = 0;
+	
+	//检查该指纹是否录入过
+        //首先调用指纹内部接口进行比对
+        number = save_number;
+        ret = kiran_fprint_manager_verify_finger_print (priv->kfpmanager,
+                                                        saveTemplates,
+                                                        saveTemplateLens,
+                                                        &number,
+                                                        DEFAULT_TIME_OUT);
+        dzlog_debug ("kiran_fprint_verify_acquire_finger_print ret is %d\n", ret);
+        if (ret == FPRINT_RESULT_UNSUPPORT) //指纹内部认证接口不支持， 调用其它接口认证
         {
-            g_signal_emit(kirBiometrics, 
-                  	  signals[SIGNAL_FPRINT_ENROLL_STATUS],  0,
-                          _("Successed enroll finger!"), id, 100, 
-                          TRUE);
-        }
-        g_free(id);
-    }
+            int j = 0;
 
-    if (ret != FPRINT_RESULT_OK)
-    {
-	if (priv->fp_action != FP_ACTION_ENROLL)
+            for (j = 0; j < save_number; j++)
+            { 
+                ret = kiran_fprint_manager_template_match (priv->kfpmanager,
+                                                           regTemplate,
+                                                           length,
+                                                           saveTemplates[j],
+                                                           saveTemplateLens[j]);
+
+               if (ret == FPRINT_RESULT_OK)
+               {
+               
+                  id = g_compute_checksum_for_string (G_CHECKSUM_MD5,
+	        			              saveTemplates[j],
+	    			                      saveTemplateLens[j]);
+                  break;
+               }
+            }
+            dzlog_debug ("kiran_fprint_manager_template_match ret is %d\n", ret);
+	}
+        else if (ret == FPRINT_RESULT_OK)
+        {
+            if (number >=0 && number < save_number)
+            {
+                id = g_compute_checksum_for_string (G_CHECKSUM_MD5,
+	    			                    saveTemplates[number],
+				                    saveTemplateLens[number]);
+            }
+        }
+
+	if (ret != FPRINT_RESULT_OK)
 	{
-            g_signal_emit(kirBiometrics, 
-    	      	      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-    	              _("Failed enroll finger!"), "", progress, 
-    	      	      TRUE);
+            //该指纹没有录入过
+            //进行指纹保存
+            ret = kiran_biometrics_save_fprint (regTemplate, length, &id);
+            if (ret == 0)
+            {
+                g_signal_emit(kirBiometrics, 
+                      	  signals[SIGNAL_FPRINT_ENROLL_STATUS],  0,
+                              _("Successed enroll finger!"), id, 100, 
+                              TRUE);
+            }
 	}
 	else
 	{
-            g_signal_emit(kirBiometrics,
-                      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
-                      _("Cancel fprint enroll!"), "", 0,
-                      TRUE);
+            g_signal_emit(kirBiometrics, 
+                  	  signals[SIGNAL_FPRINT_ENROLL_STATUS],  0,
+                          _("Finger exist!"), id, 0, 
+                          TRUE);
 	}
+
+	g_free(id);
+    }
+
+out:
+    if (ret != FPRINT_RESULT_OK)
+    {
+	char *str = _("Failed enroll finger!");
+
+	if (priv->fp_action != FP_ACTION_ENROLL)
+	{
+	    str = _("Cancel fprint enroll!");
+	}
+	else if (over_support)
+	{
+	    str = _("Finger number reach on limit!");
+	}
+
+        g_signal_emit(kirBiometrics,
+                      signals[SIGNAL_FPRINT_ENROLL_STATUS], 0,
+    	              str, "", 0,
+                      TRUE);
     }
     
     for (index = 0; index < i; index++)
         g_free(templates[index]);
     
     g_free (regTemplate);
+
+    for (i = 0; i++; i < save_number)
+        g_free(saveTemplates[i]);
 
     //完成采集
     kiran_fprint_manager_close (priv->kfpmanager);
