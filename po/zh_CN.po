@@ -146,7 +146,7 @@ msgid "User and Fprint Not Math, Place Again!"
 msgstr "指纹和当前用户不匹配, 请重新录入!"
 
 msgid "Finger exist!"
-msgstr "该指已经存在!"
+msgstr "该指纹已经存在!"
 
 msgid "Finger number reach on limit!"
 msgstr "指纹录入数目已达上限!"

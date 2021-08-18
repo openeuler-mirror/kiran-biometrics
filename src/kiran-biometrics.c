@@ -24,7 +24,7 @@
 #define DEFAULT_TIME_OUT  600000          /* 一次等待指纹时间，单位毫秒*/
 #define BUFFER_SIZE 1024
 
-#define SUPPORT_FINGER_NUMBER 100       /* 最大指纹模板数目 */ 
+#define SUPPORT_FINGER_NUMBER 10000 /* 最大指纹模板数目 */
 
 GQuark fprint_error_quark(void);
 GType fprint_error_get_type(void);
