@@ -708,9 +708,10 @@ do_finger_enroll (gpointer data)
 	}
 	else
 	{
+	    //指纹已经存在，直接返回该指纹
             g_signal_emit(kirBiometrics, 
                   	  signals[SIGNAL_FPRINT_ENROLL_STATUS],  0,
-                          _("Finger exist!"), id, 0, 
+                          _("Successed enroll finger!"), id, 100, 
                           TRUE);
 	}
 
