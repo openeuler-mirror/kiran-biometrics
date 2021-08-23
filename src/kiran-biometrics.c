@@ -332,7 +332,7 @@ kiran_biometrics_get_save_fprint (unsigned char **template,
 
     if (!result)
     {
-        dzlog_debug ("get file %s failed:", path, error->message);
+        dzlog_debug ("get file %s failed: %s", path, error->message);
         g_error_free (error);
         ret = -1; 
     }
@@ -358,7 +358,7 @@ kiran_biometrics_get_save_fprints (unsigned char **saveTemplates,
 
     if (dir == NULL)
     {
-        dzlog_debug ("open dir %s failed:", FPRINT_DIR, error->message);
+        dzlog_debug ("open dir %s failed: %s", FPRINT_DIR, error->message);
         g_error_free (error);
         return -1;
     }
@@ -765,7 +765,7 @@ kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics,
     if (priv->fprint_busy)
     {
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_DEVICE_BUSY, _("Fingerprint Device Busy"));
+		     FPRINT_ERROR_DEVICE_BUSY, "%s", _("Fingerprint Device Busy"));
 	dbus_g_method_return_error (context, error);
 	return;
     }
@@ -791,7 +791,7 @@ kiran_biometrics_enroll_fprint_start (KiranBiometrics *kirBiometrics,
 	    msg = _("Open Fingerprint Device Fail!");
 
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_NOT_FOUND_DEVICE, msg);
+		     FPRINT_ERROR_NOT_FOUND_DEVICE, "%s", msg);
 	dbus_g_method_return_error (context, error);
 	return;
     }
@@ -809,7 +809,7 @@ kiran_biometrics_enroll_fprint_stop (KiranBiometrics *kirBiometrics,
     if (priv->fp_action != FP_ACTION_ENROLL)
     {
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, _("No Action In Progress"));
+		     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "%s", _("No Action In Progress"));
 	dbus_g_method_return_error (context, error);
 	return;
     }
@@ -1006,7 +1006,7 @@ kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics,
     if (priv->fprint_busy)
     {
         g_set_error (&error, FPRINT_ERROR, 
-                         FPRINT_ERROR_DEVICE_BUSY, _("Fingerprint Device Busy"));
+                         FPRINT_ERROR_DEVICE_BUSY, "%s", _("Fingerprint Device Busy"));
 	dbus_g_method_return_error (context, error);
         return;
     }
@@ -1025,7 +1025,7 @@ kiran_biometrics_verify_fprint_start (KiranBiometrics *kirBiometrics,
     else
     {
 	g_set_error (&error, FPRINT_ERROR, 
-		     FPRINT_ERROR_NOT_FOUND_DEVICE, _("Fingerprint Device Not Found"));
+		     FPRINT_ERROR_NOT_FOUND_DEVICE, "%s", _("Fingerprint Device Not Found"));
 	dbus_g_method_return_error (context, error);
 	return;
     }
@@ -1043,7 +1043,7 @@ kiran_biometrics_verify_fprint_stop (KiranBiometrics *kirBiometrics,
     if (priv->fp_action != FP_ACTION_VERIFY)
     {
         g_set_error (&error, FPRINT_ERROR, 
-                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, _("No Action In Progress"));
+                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "%s", _("No Action In Progress"));
 	dbus_g_method_return_error (context, error);
         return;
     }
@@ -1073,7 +1073,7 @@ kiran_biometrics_delete_enrolled_finger (KiranBiometrics *kirBiometrics,
     if (ret != FPRINT_RESULT_OK)
     {
         g_set_error (&error, FPRINT_ERROR,
-                     FPRINT_ERROR_INTERNAL, _("Internal Error"));
+                     FPRINT_ERROR_INTERNAL, "%s", _("Internal Error"));
 	dbus_g_method_return_error (context, error);
     }
     
@@ -1118,7 +1118,7 @@ kiran_biometrics_enroll_face_start (KiranBiometrics *kirBiometrics,
     if (priv->face_busy)
     {
         g_set_error (&error, FACE_ERROR,
-                     FACE_ERROR_DEVICE_BUSY, _("Face Device Busy"));
+                     FACE_ERROR_DEVICE_BUSY, "%s", _("Face Device Busy"));
         dbus_g_method_return_error (context, error);
         return;
     }
@@ -1142,7 +1142,7 @@ kiran_biometrics_enroll_face_start (KiranBiometrics *kirBiometrics,
     }
 
     g_set_error (&error, FACE_ERROR,
-                     FACE_ERROR_NOT_FOUND_DEVICE, _("Face Device Not Found"));
+                     FACE_ERROR_NOT_FOUND_DEVICE, "%s", _("Face Device Not Found"));
     dbus_g_method_return_error (context, error);
 #endif /* HAVE_KIRAN_FACE */
 }
@@ -1158,7 +1158,7 @@ kiran_biometrics_enroll_face_stop (KiranBiometrics *kirBiometrics,
     if (priv->face_action != FACE_ACTION_ENROLL)
     {
         g_set_error (&error, FPRINT_ERROR,
-                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, _("No Action In Progress"));
+                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "%s", _("No Action In Progress"));
         dbus_g_method_return_error (context, error);
         return;
     }
@@ -1190,7 +1190,7 @@ kiran_biometrics_verify_face_start (KiranBiometrics *kirBiometrics,
     if (priv->face_busy)
     {
         g_set_error (&error, FACE_ERROR,
-                     FACE_ERROR_DEVICE_BUSY, _("Face Device Busy"));
+                     FACE_ERROR_DEVICE_BUSY, "%s", _("Face Device Busy"));
         dbus_g_method_return_error (context, error);
         return;
     }
@@ -1218,7 +1218,7 @@ kiran_biometrics_verify_face_start (KiranBiometrics *kirBiometrics,
     }
 
     g_set_error (&error, FACE_ERROR,
-                     FACE_ERROR_NOT_FOUND_DEVICE, _("Face Device Not Found"));
+                     FACE_ERROR_NOT_FOUND_DEVICE, "%s", _("Face Device Not Found"));
     dbus_g_method_return_error (context, error);
 #endif /* HAVE_KIRAN_FACE */
 }
@@ -1234,7 +1234,7 @@ kiran_biometrics_verify_face_stop (KiranBiometrics *kirBiometrics,
     if (priv->face_action != FACE_ACTION_VERIFY)
     {
         g_set_error (&error, FPRINT_ERROR,
-                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, _("No Action In Progress"));
+                     FPRINT_ERROR_NO_ACTION_IN_PROGRESS, "%s", _("No Action In Progress"));
         dbus_g_method_return_error (context, error);
         return;
     }
@@ -1268,7 +1268,7 @@ kiran_biometrics_delete_enrolled_face (KiranBiometrics *kirBiometrics,
     if (ret != FACE_RESULT_OK)
     {
         g_set_error (&error, FACE_ERROR,
-                     FACE_ERROR_INTERNAL, _("Internal Error"));
+                     FACE_ERROR_INTERNAL, "%s", _("Internal Error"));
         dbus_g_method_return_error (context, error);
 	return;
     }
