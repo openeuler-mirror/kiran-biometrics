@@ -1,6 +1,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#cmakedefine HAVE_KIRAN_FACE
+
 #define DEBUG @DEBUG@
 
 /* dbus */

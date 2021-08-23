@@ -7,7 +7,7 @@ yum install glib-2.0-devel dbus-glib-devel fingerprint-sdk-devel zlog-devel
 
 编译：
 mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_FINGER=true ..
 
 安装：
 cmake install
