@@ -21,7 +21,11 @@
 #include <glib-object.h>
 #include <gmodule.h>
 #include <locale.h>
+#ifdef ENABLE_ZLOG_EX
 #include <zlog_ex.h>
+#else
+#include <zlog.h>
+#endif
 #include "kiran-biometrics.h"
 
 
@@ -34,8 +38,15 @@ int main (int argc, char **argv)
     DBusGProxy *driver_proxy;
     guint request_name_ret;
 
+#ifdef ENABLE_ZLOG_EX
     if (dzlog_init_ex (NULL, "kylinsec-system", "kiran-biometrics", "kiran_biometrics_manager") < 0)
+#else
+    if (dzlog_init("/etc/zlog.conf", "kylinsec-system") < 0)
+#endif
+    {
+	g_error ("zlog init failed!");
 	return -1;
+    }
 
     setlocale(LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);

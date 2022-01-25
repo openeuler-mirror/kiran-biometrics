@@ -21,7 +21,11 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <errno.h>
+#ifdef ENABLE_ZLOG_EX
 #include <zlog_ex.h>
+#else
+#include <zlog.h>
+#endif
 
 #include "kiran-biometrics.h"
 #include "kiran-fprint-manager.h"
