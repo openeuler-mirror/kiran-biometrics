@@ -993,12 +993,13 @@ do_finger_verify (gpointer data)
                           signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
                           _("Cancel fprint verify!"), TRUE, FALSE, "");
 	}
-	else
-	{
-            g_signal_emit(kirBiometrics, 
+    }
+
+    if (i == MAX_TRY_COUNT)
+    {
+        g_signal_emit(kirBiometrics, 
                       signals[SIGNAL_FPRINT_VERIFY_STATUS], 0,
                       _("Fingerprint over max try count!"), TRUE, FALSE, "");
-	}
     }
 
     kiran_fprint_manager_close (priv->kfpmanager);
