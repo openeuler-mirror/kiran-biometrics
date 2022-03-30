@@ -17,13 +17,14 @@
 
 typedef void *HANDLE;
 
-enum {
-    FPRINT_RESULT_UNSUPPORT = -1, //此接口不支持
-    FPRINT_RESULT_OK = 0, //成功
-    FPRINT_RESULT_FAIL = 1, //失败
-    FPRINT_RESULT_TIMEOUT = 2, //超时
-    FPRINT_RESULT_NO_DEVICE = 3, //设备不存在
-    FPRINT_RESULT_OPEN_DEVICE_FAIL = 4, //打开设备失败
+enum
+{
+    FPRINT_RESULT_UNSUPPORT = -1,        //此接口不支持
+    FPRINT_RESULT_OK = 0,                //成功
+    FPRINT_RESULT_FAIL = 1,              //失败
+    FPRINT_RESULT_TIMEOUT = 2,           //超时
+    FPRINT_RESULT_NO_DEVICE = 3,         //设备不存在
+    FPRINT_RESULT_OPEN_DEVICE_FAIL = 4,  //打开设备失败
     //For fprint
     FPRINT_RESULT_ENROLL_RETRY_TOO_SHORT = 5,
     FPRINT_RESULT_ENROLL_RETRY_CENTER_FINGER = 6,
@@ -36,7 +37,6 @@ enum {
 /*
  * 指纹模块头文件，每个指纹厂家都需要实现这些函数才能使用
  */
-
 
 /*
  * [功能]
@@ -90,7 +90,7 @@ int kiran_fprint_get_dev_count();
  * 设备操作句柄
  * 
  */
-HANDLE kiran_fprint_open_device (int index);
+HANDLE kiran_fprint_open_device(int index);
 
 /*
  * [功能]
@@ -113,10 +113,10 @@ HANDLE kiran_fprint_open_device (int index);
  * FPRINT_RESULT_ENROLL_COMPLETE 表示指纹驱动内部进行采集完成时返回，如libfprint库
  * 其它表示失败
  */
-int kiran_fprint_acquire_finger_print (HANDLE hDevice,
-			    	       unsigned char **fpTemplate,
-				       unsigned int *cbTemplate,
-				       unsigned int timeout);
+int kiran_fprint_acquire_finger_print(HANDLE hDevice,
+                                      unsigned char **fpTemplate,
+                                      unsigned int *cbTemplate,
+                                      unsigned int timeout);
 /* 
  * [功能]
  * 停止采集指纹模板
@@ -152,11 +152,11 @@ void kiran_fprint_acquire_finger_print_stop(HANDLE hDevice);
  * -1 表示不支持
  *  其它表示失败
  */
-int kiran_fprint_verify_finger_print (HANDLE hDevice,
-			    	       unsigned char **fpTemplate,
-				       unsigned int *cbTemplate,
-                                       unsigned int *number,
-				       unsigned int timeout);
+int kiran_fprint_verify_finger_print(HANDLE hDevice,
+                                     unsigned char **fpTemplate,
+                                     unsigned int *cbTemplate,
+                                     unsigned int *number,
+                                     unsigned int timeout);
 
 /*
  * [功能]
@@ -170,7 +170,7 @@ int kiran_fprint_verify_finger_print (HANDLE hDevice,
  * 0 表示成功
  * 其它表示失败
  */
-int kiran_fprint_close_device (HANDLE hDevice);
+int kiran_fprint_close_device(HANDLE hDevice);
 
 /*
  * [功能]
@@ -199,12 +199,12 @@ int kiran_fprint_close_device (HANDLE hDevice);
  * 0 表示成功
  * 其它表示失败
  */
-int kiran_fprint_template_merge (HANDLE hDevice,
-				 unsigned char *fpTemplate1,
-			         unsigned char *fpTemplate2,
-				 unsigned char *fpTemplate3,
-				 unsigned char **regTemplate,
-				 unsigned int *cbRegTemplate);
+int kiran_fprint_template_merge(HANDLE hDevice,
+                                unsigned char *fpTemplate1,
+                                unsigned char *fpTemplate2,
+                                unsigned char *fpTemplate3,
+                                unsigned char **regTemplate,
+                                unsigned int *cbRegTemplate);
 
 /*
  * [功能]
@@ -227,10 +227,10 @@ int kiran_fprint_template_merge (HANDLE hDevice,
  * 0 表示匹配
  * 其它表示失败
  */
-int kiran_fprint_template_match (HANDLE hDevice,
-			         unsigned char *fpTemplate1,
-				 unsigned int cbfpTemplate1,
-			         unsigned char *fpTemplate2,
-				 unsigned int cbfpTemplate2);
+int kiran_fprint_template_match(HANDLE hDevice,
+                                unsigned char *fpTemplate1,
+                                unsigned int cbfpTemplate1,
+                                unsigned char *fpTemplate2,
+                                unsigned int cbfpTemplate2);
 
 #endif /* __KIRAN_FPRINT_MODULE_H__ */

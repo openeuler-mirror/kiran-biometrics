@@ -12,31 +12,31 @@
  * Author:     wangxiaoqing <wangxiaoqing@kylinos.com.cn>
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/time.h>
 #include <dlfcn.h>  //Linux动态库的显示调用
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include "kiran-fprint-module.h"
-#include "zk/zkinterface.h"
+#include "zk/libzkfp.h"
 #include "zk/libzkfperrdef.h"
 #include "zk/libzkfptype.h"
-#include "zk/libzkfp.h"
+#include "zk/zkinterface.h"
 
 static HANDLE m_libHandle = NULL;
 static HANDLE m_hDBCache = NULL;  //算法缓冲区
 
 static int do_acquire = 0;
 
-unsigned int 
+unsigned int
 GetTickCount()  //获取当前时间
 {
     struct timeval tv;
     struct timezone tz;
     gettimeofday(&tv, &tz);
-    return (tv.tv_sec*1000 + tv.tv_usec/1000);
+    return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
 static int
@@ -45,13 +45,13 @@ loadlib()
     m_libHandle = dlopen("libzkfp.so", RTLD_NOW);
     if (NULL == m_libHandle)
     {
-	return -1;
+        return -1;
     }
 
     ZKFPM_Init = (T_ZKFPM_Init)dlsym(m_libHandle, "ZKFPM_Init");
     if (NULL == ZKFPM_Init)
     {
-	return -1;
+        return -1;
     }
 
     ZKFPM_Terminate = (T_ZKFPM_Terminate)dlsym(m_libHandle, "ZKFPM_Terminate");
@@ -70,8 +70,8 @@ loadlib()
     ZKFPM_DBCount = (T_ZKFPM_DBCount)dlsym(m_libHandle, "ZKFPM_DBCount");
     ZKFPM_DBIdentify = (T_ZKFPM_DBIdentify)dlsym(m_libHandle, "ZKFPM_DBIdentify");
     ZKFPM_DBMatch = (T_ZKFPM_DBMatch)dlsym(m_libHandle, "ZKFPM_DBMatch");
-    ZKFPM_SetLogLevel=(T_ZKFPM_SetLogLevel)dlsym(m_libHandle, "ZKFPM_SetLogLevel");
-    ZKFPM_ConfigLog=(T_ZKFPM_ConfigLog)dlsym(m_libHandle, "ZKFPM_ConfigLog");
+    ZKFPM_SetLogLevel = (T_ZKFPM_SetLogLevel)dlsym(m_libHandle, "ZKFPM_SetLogLevel");
+    ZKFPM_ConfigLog = (T_ZKFPM_ConfigLog)dlsym(m_libHandle, "ZKFPM_ConfigLog");
 
     return 0;
 }
@@ -79,17 +79,17 @@ loadlib()
 int kiran_fprint_init()
 {
     int ret;
-    
+
     ret = loadlib();
     if (ret != 0)
-	return FPRINT_RESULT_FAIL;
+        return FPRINT_RESULT_FAIL;
 
     ret = ZKFPM_Init();
 
     if (ret != ZKFP_ERR_OK)
-	return FPRINT_RESULT_FAIL;
+        return FPRINT_RESULT_FAIL;
 
-    m_hDBCache = ZKFPM_DBInit(); //创建算法缓冲区   返回值：缓冲区句柄
+    m_hDBCache = ZKFPM_DBInit();  //创建算法缓冲区   返回值：缓冲区句柄
     if (NULL == m_hDBCache)
     {
         ZKFPM_Terminate();  //释放资源
@@ -113,8 +113,8 @@ int kiran_fprint_finalize()
 
     if (m_libHandle)
     {
-	dlclose (m_libHandle);
-	m_libHandle= NULL;
+        dlclose(m_libHandle);
+        m_libHandle = NULL;
     }
 
     return ret;
@@ -125,15 +125,15 @@ int kiran_fprint_get_dev_count()
     return ZKFPM_GetDeviceCount();
 }
 
-HANDLE kiran_fprint_open_device (int index)
+HANDLE kiran_fprint_open_device(int index)
 {
-    return ZKFPM_OpenDevice (index);
+    return ZKFPM_OpenDevice(index);
 }
 
-int kiran_fprint_acquire_finger_print (HANDLE hDevice,
-			    	       unsigned char **fpTemplate,
-				       unsigned int *cbTemplate,
-				       unsigned int timeout)
+int kiran_fprint_acquire_finger_print(HANDLE hDevice,
+                                      unsigned char **fpTemplate,
+                                      unsigned int *cbTemplate,
+                                      unsigned int timeout)
 {
     unsigned int preTime = GetTickCount();
     char paramValue[4] = {0x0};
@@ -147,61 +147,60 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
 
     do_acquire = 0;
 
-    memset(paramValue, 0x0, 4);  //初始化paramValue[4]
-    cbParamValue = 4;  //初始化cbParamValue
-                                /* |   设备  |   参数类型     |  参数值     |  参数数据长度  */
-    ZKFPM_GetParameters(hDevice, 1, (unsigned char*)paramValue, &cbParamValue);//获取采集器参数 图像宽
- 
-    memset(paramValue, 0x0, 4);  //初始化paramValue[4]
-    cbParamValue =4;  //初始化cbParamValue
-                            /* |   设备  |   参数类型     |  参数值     |  参数数据长度  */
-    ZKFPM_GetParameters(hDevice, 2, (unsigned char*)paramValue, &cbParamValue);//获取采集器参数 图像高
+    memset(paramValue, 0x0, 4);                                                   //初始化paramValue[4]
+    cbParamValue = 4;                                                             //初始化cbParamValue
+                                                                                  /* |   设备  |   参数类型     |  参数值     |  参数数据长度  */
+    ZKFPM_GetParameters(hDevice, 1, (unsigned char *)paramValue, &cbParamValue);  //获取采集器参数 图像宽
 
-    memset(paramValue, 0x0, 4);  //初始化paramValue[4]
-    cbParamValue =4;  //初始化cbParamValue
-                            /* |   设备  |   参数类型     |  参数值     |  参数数据长度  */
-    ZKFPM_GetParameters(hDevice, 106, (unsigned char*)paramValue, &cbParamValue);//获取采集器参数 图像数据大小
-    if(ret != 0)
-	return FPRINT_RESULT_FAIL;
+    memset(paramValue, 0x0, 4);                                                   //初始化paramValue[4]
+    cbParamValue = 4;                                                             //初始化cbParamValue
+                                                                                  /* |   设备  |   参数类型     |  参数值     |  参数数据长度  */
+    ZKFPM_GetParameters(hDevice, 2, (unsigned char *)paramValue, &cbParamValue);  //获取采集器参数 图像高
+
+    memset(paramValue, 0x0, 4);                                                     //初始化paramValue[4]
+    cbParamValue = 4;                                                               //初始化cbParamValue
+                                                                                    /* |   设备  |   参数类型     |  参数值     |  参数数据长度  */
+    ZKFPM_GetParameters(hDevice, 106, (unsigned char *)paramValue, &cbParamValue);  //获取采集器参数 图像数据大小
+    if (ret != 0)
+        return FPRINT_RESULT_FAIL;
 
     imageBufferSize = *((int *)paramValue);
     m_pImgBuf = (unsigned char *)malloc(imageBufferSize);
     if (m_pImgBuf == NULL)
-	return FPRINT_RESULT_FAIL;
+        return FPRINT_RESULT_FAIL;
 
     ret = FPRINT_RESULT_FAIL;
 
     while (0 == do_acquire)
     {
+        ret = ZKFPM_AcquireFingerprint(hDevice,
+                                       m_pImgBuf, imageBufferSize,
+                                       szTemplate, &tempLen);
+        if (ret == 0)
+        {
+            break;
+        }
 
-        ret = ZKFPM_AcquireFingerprint (hDevice, 
-		    	                    m_pImgBuf, imageBufferSize,
-			                    szTemplate, &tempLen);
-	if (ret == 0)
-	{
-	    break;
-	}
+        curTime = GetTickCount();
+        if (curTime - preTime >= timeout)
+        {
+            ret = FPRINT_RESULT_FAIL;
+            break;
+        }
 
-	curTime = GetTickCount();
-	if (curTime - preTime >= timeout)
-	{
-	    ret = FPRINT_RESULT_FAIL;
-	    break;
-	}
-
-	usleep(100000);
+        usleep(100000);
     }
 
     if (ret == 0)
     {
-	*cbTemplate = tempLen;
-	*fpTemplate = (unsigned char *)malloc(*cbTemplate);
-	memcpy (*fpTemplate, szTemplate, *cbTemplate);
+        *cbTemplate = tempLen;
+        *fpTemplate = (unsigned char *)malloc(*cbTemplate);
+        memcpy(*fpTemplate, szTemplate, *cbTemplate);
     }
     else
     {
-	*cbTemplate = 0;
-	*fpTemplate = NULL;
+        *cbTemplate = 0;
+        *fpTemplate = NULL;
     }
 
     free(m_pImgBuf);
@@ -210,68 +209,67 @@ int kiran_fprint_acquire_finger_print (HANDLE hDevice,
     return ret;
 }
 
-void 
-kiran_fprint_acquire_finger_print_stop(HANDLE hDevice)
+void kiran_fprint_acquire_finger_print_stop(HANDLE hDevice)
 {
     do_acquire = -1;
 }
 
-int kiran_fprint_close_device (HANDLE hDevice)
+int kiran_fprint_close_device(HANDLE hDevice)
 {
     return ZKFPM_CloseDevice(hDevice);
 }
 
-int kiran_fprint_template_merge (HANDLE hDevice,
-				 unsigned char *fpTemplate1,
-			         unsigned char *fpTemplate2,
-				 unsigned char *fpTemplate3,
-				 unsigned char **regTemplate,
-				 unsigned int *cbRegTemplate)
-{ 
+int kiran_fprint_template_merge(HANDLE hDevice,
+                                unsigned char *fpTemplate1,
+                                unsigned char *fpTemplate2,
+                                unsigned char *fpTemplate3,
+                                unsigned char **regTemplate,
+                                unsigned int *cbRegTemplate)
+{
     unsigned char szTemplate[MAX_TEMPLATE_SIZE];
     unsigned int tempLen = MAX_TEMPLATE_SIZE;
     int ret;
-    
+
     ret = FPRINT_RESULT_FAIL;
-    ret = ZKFPM_DBMerge(m_hDBCache, 
-		         fpTemplate1, fpTemplate2, fpTemplate3,
-			 szTemplate, &tempLen);  //将3枚预登记指纹模板合并为一枚登记指纹
+    ret = ZKFPM_DBMerge(m_hDBCache,
+                        fpTemplate1, fpTemplate2, fpTemplate3,
+                        szTemplate, &tempLen);  //将3枚预登记指纹模板合并为一枚登记指纹
 
     if (ret == 0)
     {
-	*cbRegTemplate = tempLen;
-	*regTemplate = (unsigned char *)malloc(*cbRegTemplate);
-	 memcpy (*regTemplate, szTemplate, *cbRegTemplate);
+        *cbRegTemplate = tempLen;
+        *regTemplate = (unsigned char *)malloc(*cbRegTemplate);
+        memcpy(*regTemplate, szTemplate, *cbRegTemplate);
     }
     else
     {
-	*cbRegTemplate = 0;
-	*regTemplate = NULL;
-    }		   
+        *cbRegTemplate = 0;
+        *regTemplate = NULL;
+    }
 
     return ret;
 }
 
-int kiran_fprint_template_match (HANDLE hDevice,
-			         unsigned char *fpTemplate1,
-				 unsigned int cbfpTemplate1,
-			         unsigned char *fpTemplate2,
-				 unsigned int cbfpTemplate2)
+int kiran_fprint_template_match(HANDLE hDevice,
+                                unsigned char *fpTemplate1,
+                                unsigned int cbfpTemplate1,
+                                unsigned char *fpTemplate2,
+                                unsigned int cbfpTemplate2)
 {
     int score = 0;
 
-    score = ZKFPM_DBMatch(m_hDBCache, 
-		          fpTemplate1, cbfpTemplate1, 
-			  fpTemplate2, cbfpTemplate2); 
+    score = ZKFPM_DBMatch(m_hDBCache,
+                          fpTemplate1, cbfpTemplate1,
+                          fpTemplate2, cbfpTemplate2);
 
     return score > 0 ? FPRINT_RESULT_OK : FPRINT_RESULT_FAIL;
 }
 
-int kiran_fprint_verify_finger_print (HANDLE hDevice,
-                                      unsigned char **fpTemplate,
-                                      unsigned int *cbTemplate,
-                                      unsigned int *number,
-                                      unsigned int timeout)
+int kiran_fprint_verify_finger_print(HANDLE hDevice,
+                                     unsigned char **fpTemplate,
+                                     unsigned int *cbTemplate,
+                                     unsigned int *number,
+                                     unsigned int timeout)
 {
     return FPRINT_RESULT_UNSUPPORT;
 }
