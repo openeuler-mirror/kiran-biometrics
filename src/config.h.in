@@ -1,0 +1,17 @@
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#cmakedefine HAVE_KIRAN_FACE
+
+#define DEBUG @DEBUG@
+
+/* dbus */
+#define SERVICE_NAME "@SERVICE_NAME@"
+#define SERVICE_PATH "@SERVICE_PATH@"
+#define SERVICE_INTERFACE "@SERVICE_INTERFACE@"
+#define FPRINT_MODULEDIR "@MODULE_DIR@"
+
+#define GETTEXT_PACKAGE "@PROJECT_NAME@"
+#define LOCALEDIR       "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/locale"
+
+#endif /* __CONFIG_H__ */
