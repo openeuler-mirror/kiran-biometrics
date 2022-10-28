@@ -4,10 +4,11 @@ pkg_check_modules (GLIB2 REQUIRED glib-2.0)
 pkg_check_modules (GDBUS REQUIRED dbus-glib-1)
 pkg_check_modules (GIO_UNIX REQUIRED gio-unix-2.0)
 pkg_check_modules (GLIB_JSON REQUIRED json-glib-1.0)
+pkg_check_modules (KIRAN_CC_DAEMON REQUIRED kiran-cc-daemon)
 
 find_library(PAM_LIBRARY pam)
 
-include_directories(${GLIB2_INCLUDE_DIRS} ${GDBUS_INCLUDE_DIRS} ${GIO_UNIX_INCLUDE_DIRS} ${GLIB_JSON_INCLUDE_DIRS})
+include_directories(${GLIB2_INCLUDE_DIRS} ${GDBUS_INCLUDE_DIRS} ${GIO_UNIX_INCLUDE_DIRS} ${GLIB_JSON_INCLUDE_DIRS} ${KIRAN_CC_DAEMON_INCLUDE_DIRS})
 include_directories(${CMAKE_BINARY_DIR}/src/)
 include_directories(${CMAKE_BINARY_DIR}/pam/)
 include_directories(${SRC_DIR})
