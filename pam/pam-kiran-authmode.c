@@ -26,7 +26,7 @@
 #include <security/pam_modules.h>
 #include "json-glib/json-glib.h"
 #include "kiran-accounts-gen.h"
-#include "kiran-cc-daemon/kiran-system-daemon/accounts_i.h"
+#include "kiran-system-daemon/accounts-i.h"
 #include "kiran-pam.h"
 #include "kiran-user-gen.h"
 
