@@ -1,0 +1,7 @@
+variables:
+  RPM_BUILD_REQUIRES: 'make gcc-c++ cmake zlog-devel zlog glib2-devel dbus-glib-devel fingerprint-sdk-devel pam-devel kiran-cc-daemon-devel json-glib-devel gettext'
+
+include:
+  - project: 'os/gitlab-ci'
+    ref: main
+    file: '/cmake/cxx.gitlab-ci.yml'
