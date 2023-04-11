@@ -1,0 +1,154 @@
+# kiran biometrics package simplified Chinese translation file.
+# Copyright (C) 2020  wangxiaoqing <wangxiaoqing@kylinos.com.cn>.
+# This file is distributed under the same license as the kiran-calendar package.
+# wangxiaoqing <wangxiaoqing@kylinos.com.cn>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kiran-biometrics\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-26 16:49+0800\n"
+"PO-Revision-Date: 2020-06-28 19:05+0700\n"
+"Last-Translator: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
+"Language-Team: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Country: CHINA\n"
+"X-Poedit-Language: Chinese\n"
+
+#: ../src/kiran-biometrics.c:186
+msgid "Successed enroll face!"
+msgstr "རྒྱལ་ཁའི་ངང་ཐོ་འགོད་ངོ་།"
+
+#: ../src/kiran-biometrics.c:204
+msgid "Please look the camera!"
+msgstr "བརྙན་འཕྲིན་ལ་གཟིགས་རོགས།"
+
+#: ../src/kiran-biometrics.c:208
+msgid "Please stay from the camera!"
+msgstr "པར་ཆས་ཀྱི་ཤེལ་སྒོ་དང་ཐག་རིང་ཙམ་བྱེད་རོགས།"
+
+#: ../src/kiran-biometrics.c:212
+msgid "Please get closer to the camera!"
+msgstr "པར་ཆས་ཀྱི་ཤེལ་སྒོ་ལ་བཅར་རོགས།"
+
+#: ../src/kiran-biometrics.c:235
+msgid "Face match!"
+msgstr "གདོང་དབྱིབས་མཐུན་པ།"
+
+#: ../src/kiran-biometrics.c:253
+msgid "Face not match! Please look the camera!"
+msgstr "གདོང་དོ་མི་མཉམ། བརྙན་འཕྲིན་ལ་གཟིགས་རོགས།"
+
+#: ../src/kiran-biometrics.c:451 ../src/kiran-biometrics.c:689
+msgid "Please place the finger!"
+msgstr "མཛུབ་མོ་ཡག་པོ་འཇོག་རོགས།"
+
+#: ../src/kiran-biometrics.c:458
+msgid "Please place the finger again!"
+msgstr "ཡང་བསྐྱར་ལག་མགོ་འཇོག་རོགས།"
+
+#: ../src/kiran-biometrics.c:486
+msgid "Please place the same finger!"
+msgstr "མཛུབ་མོ་གཅིག་འཇོག་རོགས།"
+
+#: ../src/kiran-biometrics.c:539
+msgid "Successed enroll finger!"
+msgstr "གྲུབ་འབྲས་ཐོབ་པའི་ངང་ཐོ་འགོད་མཛུབ་མོ།"
+
+#: ../src/kiran-biometrics.c:552
+msgid "Failed enroll finger!"
+msgstr "མཛུབ་མོ་ཐོ་འགོད་བྱས་ན་ཕམ།"
+
+#: ../src/kiran-biometrics.c:559
+msgid "Cancel fprint enroll!"
+msgstr "བསྐྱར་དཔར་ཐོ་འགོད་མེད་པར་བཟོས།"
+
+#: ../src/kiran-biometrics.c:588 ../src/kiran-biometrics.c:758
+#, c-format
+msgid "Fingerprint Device Busy"
+msgstr "མཛུབ་རིས་སྒྲིག་ཆས་བྲེལ་།"
+
+#: ../src/kiran-biometrics.c:609 ../src/kiran-biometrics.c:780
+#, c-format
+msgid "Fingerprint Device Not Found"
+msgstr "མཛུབ་རིས་སྒྲིག་ཆས་རྙེད་མ་བྱུང་།"
+
+#: ../src/kiran-biometrics.c:611
+msgid "Open Fingerprint Device Fail!"
+msgstr "མཛུབ་རིས་ཀྱི་སྒྲིག་ཆས་ཁ་ཕྱེ་ཐུབ་མ་སོང་།"
+
+#: ../src/kiran-biometrics.c:632 ../src/kiran-biometrics.c:798
+#: ../src/kiran-biometrics.c:907 ../src/kiran-biometrics.c:979
+#, c-format
+msgid "No Action In Progress"
+msgstr "བཀོལ་སྤྱོད་གང་ཡང་མ་བྱས་པ་"
+
+#: ../src/kiran-biometrics.c:667
+msgid "Not Found The Id Fprint Template!"
+msgstr "Id Fprintམ་དཔེ་རྙེད་ཀྱི་མིན་འདུག"
+
+#: ../src/kiran-biometrics.c:709
+msgid "Fingerprint match!"
+msgstr "ལག་རིས་མཐུན་པ།"
+
+#: ../src/kiran-biometrics.c:717
+msgid "Fingerprint not match, place again!"
+msgstr "མཛུབ་རིས་ཆ་མི་འགྲིག་པར་བསྐྱར་དུ་འཇོག་པ།"
+
+#: ../src/kiran-biometrics.c:729
+msgid "Cancel fprint verify!"
+msgstr "བསྐྱར་དཔར་ར་སྤྲོད་མེད་པར་བཟོས།"
+
+#: ../src/kiran-biometrics.c:735
+msgid "Fingerprint over max try count!"
+msgstr "མཛུབ་རིས་ཚོད་ལྟ་བྱེད་པའི་ཐེངས་གྲངས་ཆེ་ཤོས་ལས་བརྒལ་བ།"
+
+#: ../src/kiran-biometrics.c:827 ../src/kiran-biometrics.c:1011
+#, c-format
+msgid "Internal Error"
+msgstr "ནང་ཁུལ་ཧེ་བག།"
+
+#: ../src/kiran-biometrics.c:869 ../src/kiran-biometrics.c:937
+#, c-format
+msgid "Face Device Busy"
+msgstr "Faceསྒྲིག་ཆས་བྲེལ་བ་ཆེ།"
+
+#: ../src/kiran-biometrics.c:893 ../src/kiran-biometrics.c:965
+#, c-format
+msgid "Face Device Not Found"
+msgstr "མིའི་གདོང་སྒྲིག་ཆས་རྙེད་མ་བྱུང་།"
+
+#: ../src/kiran-biometrics.c:950
+msgid "Looking for you face, Please look the camera!"
+msgstr "ཁྱོད་ཀྱི་གདོང་འཚོལ་དང་།བརྙན་འཕྲིན་ལ་ལྟོས།"
+
+msgid "Your swipe was too short, please try again."
+msgstr ""
+"ཁྱེད་རང་གི་བྱང་བུ་བེད་སྤྱོད་པའི་དུས་ཚོད་ཐུང་དྲག་པས་ཡང་བསྐྱར་ཚོད་ལྟ་ཞིག་བྱེད་རོགས།"
+
+msgid "Scan failed, please remove your finger and then try again."
+msgstr "བྱབས་འབེབས་ཕམ་པས།མཛུབ་མོ་སྤོས་ནས་ཡང་བསྐྱར་ཚོད་ལྟ་བྱོས།"
+
+msgid ""
+"Didn't catch that, please center your finger on the sensor and try again."
+msgstr ""
+"འཛིན་ཐུབ་མ་སོང་།ཁྱེད་ཀྱིས་མཛུབ་མོ་ཚོར་འདྲེན་འཕྲུལ་ཆས་སྟེང་དུ་བཞག་རྗེས་ཡང་བསྐྱར་ཚོད་ལྟ་ཞིག་བྱེད་རོགས།"
+
+msgid "Didn't quite catch that. Please try again."
+msgstr "ངས་གསལ་བོ་མི་ཤེས། ཡང་བསྐྱར་ཚོད་ལྟ་ཞིག་བྱེད་རོགས།"
+
+msgid "Enroll stage passed %d. Please place the finger again!"
+msgstr "ཐོ་འགོད་དུས་རིམ་ནི་བརྒྱ་ཆའི་dལ་ཐོན་ཡོད། ཡང་བསྐྱར་ལག་མགོ་འཇོག་རོགས།"
+
+msgid "User and Fprint Not Math, Place Again!"
+msgstr "མཁོ་མཁན་དང་Fprintནི་རྩིས་རིག་མ་རེད།ད་དུང་གཅིག་གཏོང་།"
+
+msgid "Finger exist!"
+msgstr "མཛུབ་མོ་གནས་པ།"
+
+msgid "Finger number reach on limit!"
+msgstr "ལག་པའི་མཛུབ་མོ་ནི་ཚད་ལ་སླེབས་ཡོད།"

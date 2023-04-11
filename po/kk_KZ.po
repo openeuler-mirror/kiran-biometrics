@@ -1,0 +1,152 @@
+# kiran biometrics package simplified Chinese translation file.
+# Copyright (C) 2020  wangxiaoqing <wangxiaoqing@kylinos.com.cn>.
+# This file is distributed under the same license as the kiran-calendar package.
+# wangxiaoqing <wangxiaoqing@kylinos.com.cn>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kiran-biometrics\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-26 16:49+0800\n"
+"PO-Revision-Date: 2020-06-28 19:05+0700\n"
+"Last-Translator: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
+"Language-Team: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Country: CHINA\n"
+"X-Poedit-Language: Chinese\n"
+
+#: ../src/kiran-biometrics.c:186
+msgid "Successed enroll face!"
+msgstr "Сәтті тіркелген тұлға"
+
+#: ../src/kiran-biometrics.c:204
+msgid "Please look the camera!"
+msgstr "Камераға қараңыз"
+
+#: ../src/kiran-biometrics.c:208
+msgid "Please stay from the camera!"
+msgstr "Линзадан алыс болыңыз"
+
+#: ../src/kiran-biometrics.c:212
+msgid "Please get closer to the camera!"
+msgstr "Камераға жақындаңыз"
+
+#: ../src/kiran-biometrics.c:235
+msgid "Face match!"
+msgstr "Бет пішінін сәйкестендіру"
+
+#: ../src/kiran-biometrics.c:253
+msgid "Face not match! Please look the camera!"
+msgstr "Бет сәйкессіздігі Камераға қараңыз"
+
+#: ../src/kiran-biometrics.c:451 ../src/kiran-biometrics.c:689
+msgid "Please place the finger!"
+msgstr "Саусақтарыңызды қойыңыз"
+
+#: ../src/kiran-biometrics.c:458
+msgid "Please place the finger again!"
+msgstr "Саусағыңызды қайтадан салыңыз"
+
+#: ../src/kiran-biometrics.c:486
+msgid "Please place the same finger!"
+msgstr "Сол саусақты қойыңыз"
+
+#: ../src/kiran-biometrics.c:539
+msgid "Successed enroll finger!"
+msgstr "Саусақты сәтті тіркеңіз"
+
+#: ../src/kiran-biometrics.c:552
+msgid "Failed enroll finger!"
+msgstr "Саусақты тіркеу сәтсіз аяқталды"
+
+#: ../src/kiran-biometrics.c:559
+msgid "Cancel fprint enroll!"
+msgstr "Басып шығаруды тіркеуден бас тарту"
+
+#: ../src/kiran-biometrics.c:588 ../src/kiran-biometrics.c:758
+#, c-format
+msgid "Fingerprint Device Busy"
+msgstr "Саусақ ізі құрылғысы бос емес"
+
+#: ../src/kiran-biometrics.c:609 ../src/kiran-biometrics.c:780
+#, c-format
+msgid "Fingerprint Device Not Found"
+msgstr "Саусақ ізі құрылғысы табылмады"
+
+#: ../src/kiran-biometrics.c:611
+msgid "Open Fingerprint Device Fail!"
+msgstr "Саусақ ізі құрылғысын ашу сәтсіз аяқталды"
+
+#: ../src/kiran-biometrics.c:632 ../src/kiran-biometrics.c:798
+#: ../src/kiran-biometrics.c:907 ../src/kiran-biometrics.c:979
+#, c-format
+msgid "No Action In Progress"
+msgstr "Ештеңе орындалмады"
+
+#: ../src/kiran-biometrics.c:667
+msgid "Not Found The Id Fprint Template!"
+msgstr "IdFprint шаблоны табылмады"
+
+#: ../src/kiran-biometrics.c:709
+msgid "Fingerprint match!"
+msgstr "Саусақ ізін сәйкестендіру"
+
+#: ../src/kiran-biometrics.c:717
+msgid "Fingerprint not match, place again!"
+msgstr "Саусақ ізі сәйкес келмейді"
+
+#: ../src/kiran-biometrics.c:729
+msgid "Cancel fprint verify!"
+msgstr "Басып шығаруды тексеруден бас тарту"
+
+#: ../src/kiran-biometrics.c:735
+msgid "Fingerprint over max try count!"
+msgstr "Саусақ ізі максималды әрекеттен асады"
+
+#: ../src/kiran-biometrics.c:827 ../src/kiran-biometrics.c:1011
+#, c-format
+msgid "Internal Error"
+msgstr "Ішкі қате"
+
+#: ../src/kiran-biometrics.c:869 ../src/kiran-biometrics.c:937
+#, c-format
+msgid "Face Device Busy"
+msgstr "Face құрылғысы бос емес"
+
+#: ../src/kiran-biometrics.c:893 ../src/kiran-biometrics.c:965
+#, c-format
+msgid "Face Device Not Found"
+msgstr "Бет құрылғысы табылмады"
+
+#: ../src/kiran-biometrics.c:950
+msgid "Looking for you face, Please look the camera!"
+msgstr "Бетіңізді табыңыз, камераға қараңыз"
+
+msgid "Your swipe was too short, please try again."
+msgstr "Карточканы сырғыту уақыты тым қысқа, әрекетті қайталаңыз"
+
+msgid "Scan failed, please remove your finger and then try again."
+msgstr "Сканерлеу сәтсіз аяқталды, саусағыңызды алып, әрекетті қайталаңыз"
+
+msgid ""
+"Didn't catch that, please center your finger on the sensor and try again."
+msgstr "Саусағыңызды сенсорға қойып, әрекетті қайталаңыз"
+
+msgid "Didn't quite catch that. Please try again."
+msgstr "Мен онша түсінбеймін Әрекетті қайталаңыз"
+
+msgid "Enroll stage passed %d. Please place the finger again!"
+msgstr "Тіркеу кезеңі% d өтті Саусағыңызды қайтадан салыңыз"
+
+msgid "User and Fprint Not Math, Place Again!"
+msgstr "Пайдаланушы мен Fprint қайтадан математикалық емес"
+
+msgid "Finger exist!"
+msgstr "Саусақтар бар"
+
+msgid "Finger number reach on limit!"
+msgstr "Саусақтардың саны шегіне жетті"
