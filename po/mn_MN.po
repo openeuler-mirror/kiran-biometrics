@@ -1,0 +1,152 @@
+# kiran biometrics package simplified Chinese translation file.
+# Copyright (C) 2020  wangxiaoqing <wangxiaoqing@kylinos.com.cn>.
+# This file is distributed under the same license as the kiran-calendar package.
+# wangxiaoqing <wangxiaoqing@kylinos.com.cn>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kiran-biometrics\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-26 16:49+0800\n"
+"PO-Revision-Date: 2020-06-28 19:05+0700\n"
+"Last-Translator: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
+"Language-Team: wangxiaoqing <wangxiaoqing@kylinos.com.cn>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Country: CHINA\n"
+"X-Poedit-Language: Chinese\n"
+
+#: ../src/kiran-biometrics.c:186
+msgid "Successed enroll face!"
+msgstr "Амжилттай бүртгүүлсэн нүүр царай"
+
+#: ../src/kiran-biometrics.c:204
+msgid "Please look the camera!"
+msgstr "Камерыг үзнэ үү"
+
+#: ../src/kiran-biometrics.c:208
+msgid "Please stay from the camera!"
+msgstr "Линзээс хол байгаарай"
+
+#: ../src/kiran-biometrics.c:212
+msgid "Please get closer to the camera!"
+msgstr "Линзний ойролцоо байна уу"
+
+#: ../src/kiran-biometrics.c:235
+msgid "Face match!"
+msgstr "Нүүрний хэлбэр таарч байна"
+
+#: ../src/kiran-biometrics.c:253
+msgid "Face not match! Please look the camera!"
+msgstr "Нүүрний тохиромжгүй байдал Камерыг үзнэ үү"
+
+#: ../src/kiran-biometrics.c:451 ../src/kiran-biometrics.c:689
+msgid "Please place the finger!"
+msgstr "Хуруугаа тавина уу"
+
+#: ../src/kiran-biometrics.c:458
+msgid "Please place the finger again!"
+msgstr "Хуруугаа дахин тавина уу"
+
+#: ../src/kiran-biometrics.c:486
+msgid "Please place the same finger!"
+msgstr "Нэг хуруугаа тавина уу"
+
+#: ../src/kiran-biometrics.c:539
+msgid "Successed enroll finger!"
+msgstr "Хуруугаа амжилттай бүртгүүлнэ үү"
+
+#: ../src/kiran-biometrics.c:552
+msgid "Failed enroll finger!"
+msgstr "Хурууны бүртгэл амжилтгүй болсон"
+
+#: ../src/kiran-biometrics.c:559
+msgid "Cancel fprint enroll!"
+msgstr "Хэвлэх бүртгэлийг цуцлах"
+
+#: ../src/kiran-biometrics.c:588 ../src/kiran-biometrics.c:758
+#, c-format
+msgid "Fingerprint Device Busy"
+msgstr "Хурууны хээний төхөөрөмж завгүй байна"
+
+#: ../src/kiran-biometrics.c:609 ../src/kiran-biometrics.c:780
+#, c-format
+msgid "Fingerprint Device Not Found"
+msgstr "Хурууны хээг олж чадахгүй байна"
+
+#: ../src/kiran-biometrics.c:611
+msgid "Open Fingerprint Device Fail!"
+msgstr "Хурууны хээг асаах төхөөрөмж амжилтгүй боллоо"
+
+#: ../src/kiran-biometrics.c:632 ../src/kiran-biometrics.c:798
+#: ../src/kiran-biometrics.c:907 ../src/kiran-biometrics.c:979
+#, c-format
+msgid "No Action In Progress"
+msgstr "Юу ч хийгээгүй"
+
+#: ../src/kiran-biometrics.c:667
+msgid "Not Found The Id Fprint Template!"
+msgstr "Id Fprint загвар олдсонгүй"
+
+#: ../src/kiran-biometrics.c:709
+msgid "Fingerprint match!"
+msgstr "Хурууны хээ таарч байна"
+
+#: ../src/kiran-biometrics.c:717
+msgid "Fingerprint not match, place again!"
+msgstr "Хурууны хээ таарахгүй байна"
+
+#: ../src/kiran-biometrics.c:729
+msgid "Cancel fprint verify!"
+msgstr "Хэвлэх баталгаажуулалтыг цуцлах"
+
+#: ../src/kiran-biometrics.c:735
+msgid "Fingerprint over max try count!"
+msgstr "Хурууны хээ нь оролдлогын дээд хэмжээнээс давсан байна"
+
+#: ../src/kiran-biometrics.c:827 ../src/kiran-biometrics.c:1011
+#, c-format
+msgid "Internal Error"
+msgstr "Дотоод алдаа"
+
+#: ../src/kiran-biometrics.c:869 ../src/kiran-biometrics.c:937
+#, c-format
+msgid "Face Device Busy"
+msgstr "Face төхөөрөмж завгүй байна"
+
+#: ../src/kiran-biometrics.c:893 ../src/kiran-biometrics.c:965
+#, c-format
+msgid "Face Device Not Found"
+msgstr "Нүүрний төхөөрөмж олж чадахгүй байна"
+
+#: ../src/kiran-biometrics.c:950
+msgid "Looking for you face, Please look the camera!"
+msgstr "Нүүрээ олоорой, камер руу хараарай"
+
+msgid "Your swipe was too short, please try again."
+msgstr "Таны зээлийн картын хугацаа хэт богино байна. Дахин оролдоно уу"
+
+msgid "Scan failed, please remove your finger and then try again."
+msgstr "Скан амжилтгүй болсон тул хуруугаа арилгаад дахин оролдоно уу"
+
+msgid ""
+"Didn't catch that, please center your finger on the sensor and try again."
+msgstr "Юу ч биш, хуруугаа мэдрэгч дээр тавиад дахин оролдоно уу"
+
+msgid "Didn't quite catch that. Please try again."
+msgstr "Би сайн ойлгохгүй байна Дахин оролдоно уу"
+
+msgid "Enroll stage passed %d. Please place the finger again!"
+msgstr "Бүртгэлийн үе шат өнгөрсөн% d Хуруугаа дахин тавина уу"
+
+msgid "User and Fprint Not Math, Place Again!"
+msgstr "Хэрэглэгч ба Fprint нь математик биш бөгөөд үүнийг дахин тоглуулдаг"
+
+msgid "Finger exist!"
+msgstr "Хурууны оршихуй"
+
+msgid "Finger number reach on limit!"
+msgstr "Хурууны тоо хязгаарт хүрдэг"
